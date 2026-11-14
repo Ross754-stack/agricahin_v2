@@ -2,131 +2,349 @@
 {% block title %}Orders Received{% endblock %}
 {% block page_title %}Orders Received{% endblock %}
 
+{% block head %}
+<style>
+  /* ── Farmer orders hero ── */
+  .fo-hero {
+    position: relative; overflow: hidden; border-radius: var(--r-xl);
+    padding: 28px; margin-bottom: 20px; color: #fff;
+    background: linear-gradient(135deg, #14532d 0%, #166534 52%, #0f766e 100%);
+    box-shadow: 0 18px 40px rgba(20,83,45,.22);
+  }
+  .fo-hero::before {
+    content: ''; position: absolute; top: -42%; right: -6%; width: 380px; height: 380px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(74,222,128,.25) 0%, transparent 70%);
+  }
+  .fo-hero::after {
+    content: '📦'; position: absolute; right: 28px; bottom: -18px; font-size: 112px; opacity: .10; transform: rotate(-10deg);
+  }
+  .fo-hero-inner { position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .fo-kicker { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #86efac; margin-bottom: 6px; }
+  .fo-title { font-size: 28px; font-weight: 800; letter-spacing: -.03em; line-height: 1.15; }
+  .fo-sub { font-size: 14px; color: rgba(248,250,252,.78); margin-top: 6px; }
+  .fo-pill {
+    display: inline-flex; align-items: center; gap: 8px; padding: 9px 15px; border-radius: 999px;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22); font-size: 13px; font-weight: 700;
+  }
+  .fo-pill.pending { background: rgba(245,158,11,.24); border-color: rgba(252,211,77,.45); color: #fef3c7; }
+  .fo-btn-light { background: #fff; color: var(--green-800); border-color: #fff; }
+  .fo-btn-light:hover { background: var(--green-50); border-color: var(--green-50); }
+  .fo-btn-ghost { background: rgba(255,255,255,.14); color: #fff; border-color: rgba(255,255,255,.28); }
+  .fo-btn-ghost:hover { background: rgba(255,255,255,.24); }
+
+  /* ── KPI strip ── */
+  .fo-kpis { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 195px), 1fr)); margin-bottom: 20px; }
+  .fo-kpi {
+    position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; padding: 16px 18px; box-shadow: var(--shadow-sm); transition: transform .18s, box-shadow .18s;
+  }
+  .fo-kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .fo-kpi::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--kpi, var(--green-500)); }
+  .fo-kpi.k-amber { --kpi: var(--amber-500); }
+  .fo-kpi.k-blue  { --kpi: var(--blue-500); }
+  .fo-kpi.k-green { --kpi: var(--green-500); }
+  .fo-kpi.k-teal  { --kpi: #0f766e; }
+  .fo-kpi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .fo-kpi-lbl { font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--txt2); }
+  .fo-kpi-ico { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .fo-kpi-ico svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .fo-kpi-val { font-size: 26px; font-weight: 800; letter-spacing: -.04em; line-height: 1.05; word-break: break-word; }
+
+  /* ── Toolbar & chips ── */
+  .fo-toolbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+    padding: 12px; margin-bottom: 14px; box-shadow: var(--shadow-sm);
+  }
+  .fo-search { position: relative; flex: 1; min-width: 220px; }
+  .fo-search svg {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px;
+    stroke: var(--txt3); fill: none; stroke-width: 2; stroke-linecap: round; pointer-events: none;
+  }
+  .fo-search input {
+    width: 100%; height: 42px; padding: 0 36px 0 40px; border: 1.5px solid var(--border); border-radius: 12px;
+    font: inherit; font-size: 14px; background: var(--n50); color: var(--txt); outline: none; transition: all .15s;
+  }
+  .fo-search input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px rgba(22,163,74,.12); }
+  .fo-clear {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; border: none;
+    border-radius: 50%; background: var(--n200); color: var(--n600); cursor: pointer; font-size: 13px; display: none;
+  }
+  .fo-clear.on { display: block; }
+  .fo-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .fo-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 999px; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--surface); color: var(--txt2);
+    font: inherit; font-size: 12.5px; font-weight: 700; transition: all .15s;
+  }
+  .fo-chip:hover { border-color: var(--green-300); color: var(--green-800); }
+  .fo-chip.active { background: var(--green-600); border-color: var(--green-600); color: #fff; box-shadow: 0 6px 14px rgba(22,163,74,.22); }
+  .fo-chip .n { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: rgba(0,0,0,.07); }
+  .fo-chip.active .n { background: rgba(255,255,255,.24); }
+  .fo-result-line { font-size: 13px; color: var(--txt2); margin-bottom: 12px; font-weight: 600; }
+
+  /* ── Consolidated table cells ── */
+  .fo-card { border-radius: 20px; overflow: hidden; }
+  .fo-stack { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+  .fo-buyer-row { display: flex; align-items: center; gap: 10px; }
+  .fo-id {
+    display: inline-block; padding: 2px 7px; border-radius: 6px; background: var(--n100); border: 1px solid var(--border);
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; color: var(--n700);
+  }
+  .fo-signals { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+  .fo-signal-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .fo-signal-lbl { font-size: 11px; font-weight: 700; color: var(--txt3); text-transform: uppercase; letter-spacing: .04em; min-width: 58px; }
+  .fo-row.is-hidden { display: none !important; }
+  .fo-empty { display: none; text-align: center; padding: 48px 24px; }
+  .fo-empty.on { display: block; }
+
+  @media (max-width: 599px) {
+    .fo-stack { align-items: flex-end; text-align: right; }
+    .fo-signals { align-items: flex-end; }
+    .fo-signal-row { justify-content: flex-end; }
+  }
+  @media (max-width: 640px) {
+    .fo-hero { padding: 22px 18px; border-radius: 20px; }
+    .fo-title { font-size: 23px; }
+    .fo-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .fo-kpi { padding: 14px; }
+    .fo-kpi-val { font-size: 22px; }
+    .fo-chips { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 2px; scrollbar-width: none; }
+    .fo-chips::-webkit-scrollbar { display: none; }
+    .fo-chip { flex-shrink: 0; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<div class="ph">
-  <div>
-    <div class="ph-title">Orders for Your Products 📦</div>
-    <div class="ph-sub">Review and approve incoming orders</div>
-  </div>
-  {% set pending = orders | selectattr('status', 'equalto', 'Pending') | list %}
-  {% if pending %}
-    <span class="badge b-amber" style="font-size:13px;padding:6px 14px">{{ pending|length }} pending</span>
+{% set ns = namespace(pending=0, approved=0, delivered=0, cancelled=0, revenue=0.0) %}
+{% for o in orders %}
+  {% set d_status = o.delivery.status if o.delivery else '' %}
+  {% if o.status == 'Approved' %}
+    {% set ns.revenue = ns.revenue + (o.total_price or 0) %}
   {% endif %}
+  {% if o.status in ['Cancelled', 'Rejected'] %}
+    {% set ns.cancelled = ns.cancelled + 1 %}
+  {% elif d_status == 'Delivered' %}
+    {% set ns.delivered = ns.delivered + 1 %}
+  {% elif o.status == 'Pending' %}
+    {% set ns.pending = ns.pending + 1 %}
+  {% else %}
+    {% set ns.approved = ns.approved + 1 %}
+  {% endif %}
+{% endfor %}
+
+<div class="fo-hero">
+  <div class="fo-hero-inner">
+    <div>
+      <div class="fo-kicker">Seller Fulfillment Queue</div>
+      <div class="fo-title">Orders Received 📦</div>
+      <div class="fo-sub">Review AI risk signals, approve incoming orders, and manage dispatch.</div>
+    </div>
+    <div class="flex items-center gap-2" style="flex-wrap:wrap">
+      {% if ns.pending %}
+        <span class="fo-pill pending">{{ ns.pending }} pending approval</span>
+      {% else %}
+        <span class="fo-pill">{{ orders|length }} total order{{ 's' if orders|length != 1 }}</span>
+      {% endif %}
+      <a href="{{ url_for('dashboard') }}" class="btn fo-btn-ghost btn-sm">Dashboard</a>
+      <a href="{{ url_for('add_product') }}" class="btn fo-btn-light btn-sm">+ Add Product</a>
+    </div>
+  </div>
 </div>
 
 {% if orders %}
-<div class="card">
+<div class="fo-kpis">
+  <div class="fo-kpi k-amber">
+    <div class="fo-kpi-top">
+      <span class="fo-kpi-lbl">Pending Review</span>
+      <span class="fo-kpi-ico si-amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+    </div>
+    <div class="fo-kpi-val">{{ ns.pending }}</div>
+  </div>
+  <div class="fo-kpi k-blue">
+    <div class="fo-kpi-top">
+      <span class="fo-kpi-lbl">In Fulfillment</span>
+      <span class="fo-kpi-ico si-blue"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+    </div>
+    <div class="fo-kpi-val">{{ ns.approved }}</div>
+  </div>
+  <div class="fo-kpi k-green">
+    <div class="fo-kpi-top">
+      <span class="fo-kpi-lbl">Delivered</span>
+      <span class="fo-kpi-ico si-green"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+    </div>
+    <div class="fo-kpi-val">{{ ns.delivered }}</div>
+  </div>
+  <div class="fo-kpi k-teal">
+    <div class="fo-kpi-top">
+      <span class="fo-kpi-lbl">Approved Revenue</span>
+      <span class="fo-kpi-ico si-green"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span>
+    </div>
+    <div class="fo-kpi-val">&#8369;{{ "%.2f"|format(ns.revenue) }}</div>
+  </div>
+</div>
+
+<div class="fo-toolbar">
+  <div class="fo-search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="search" id="foSearch" placeholder="Search by buyer, product, or order #ID…" autocomplete="off" aria-label="Search received orders">
+    <button type="button" class="fo-clear" id="foClear" aria-label="Clear search">&#10005;</button>
+  </div>
+  <div class="fo-chips" id="foChips" role="group" aria-label="Filter orders by status">
+    <button type="button" class="fo-chip active" data-filter="all">All <span class="n">{{ orders|length }}</span></button>
+    <button type="button" class="fo-chip" data-filter="pending">Pending <span class="n">{{ ns.pending }}</span></button>
+    <button type="button" class="fo-chip" data-filter="approved">Approved <span class="n">{{ ns.approved }}</span></button>
+    <button type="button" class="fo-chip" data-filter="delivered">Delivered <span class="n">{{ ns.delivered }}</span></button>
+    <button type="button" class="fo-chip" data-filter="cancelled">Cancelled / Rejected <span class="n">{{ ns.cancelled }}</span></button>
+  </div>
+</div>
+
+<div class="fo-result-line" id="foResultLine" aria-live="polite"></div>
+
+<div class="card fo-card" id="foCard">
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
-          <th>Buyer</th>
-          <th>Product</th>
-          <th>Qty</th>
+          <th>Order &amp; Buyer</th>
+          <th>Product &amp; Qty</th>
           <th>Stock Left</th>
-          <th>Total</th>
-          <th>Payment</th>
-          <th>AI Risk</th>
-          <th>Complaint Risk</th>
-          <th>Status</th>
-          <th>Tracking</th>
+          <th>Total &amp; Payment</th>
+          <th>AI Risk Signals</th>
+          <th>Status &amp; Tracking</th>
           <th>Action</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="foBody">
         {% for o in orders %}
         {% set unit = o.product.unit or 'unit' %}
         {% set stock_info = availability[o.product.id] if availability is defined and o.product.id in availability else none %}
         {% set available_stock = stock_info.available if stock_info else (o.product.quantity or 0) %}
         {% set reserved_stock = stock_info.reserved if stock_info else 0 %}
-        <tr>
-          <td data-label="Buyer">
-            <div class="flex items-center gap-2">
+        {% set d_status = o.delivery.status if o.delivery else 'Processing' %}
+        {% if o.status in ['Cancelled', 'Rejected'] %}
+          {% set bucket = 'cancelled' %}
+        {% elif d_status == 'Delivered' %}
+          {% set bucket = 'delivered' %}
+        {% elif o.status == 'Pending' %}
+          {% set bucket = 'pending' %}
+        {% else %}
+          {% set bucket = 'approved' %}
+        {% endif %}
+        <tr class="fo-row"
+            data-bucket="{{ bucket }}"
+            data-search="{{ ('#' ~ o.id ~ ' ' ~ o.id ~ ' ' ~ o.buyer.username ~ ' ' ~ o.product.name ~ ' ' ~ o.status ~ ' ' ~ d_status)|lower }}">
+          <td data-label="Order &amp; Buyer">
+            <div class="fo-buyer-row">
               <div class="avatar av-sm">{{ o.buyer.username[0].upper() }}</div>
-              <span class="font-bold text-sm">{{ o.buyer.username }}</span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-sm">{{ o.buyer.username }}</span>
+                  <span class="fo-id">#{{ o.id }}</span>
+                </div>
+                {% if o.buyer.location %}
+                  <div class="text-muted text-xs">{{ o.buyer.location }}</div>
+                {% endif %}
+              </div>
             </div>
           </td>
-          <td data-label="Product">{{ o.product.name }}</td>
-          <td data-label="Qty">{{ o.quantity|qty }} {{ unit }}</td>
+          <td data-label="Product &amp; Qty">
+            <div class="fo-stack">
+              <span class="font-bold">{{ o.product.name }}</span>
+              <span class="text-muted text-xs">Qty: <strong>{{ o.quantity|qty }} {{ unit }}</strong></span>
+            </div>
+          </td>
           <td data-label="Stock Left">
-            {% set stock = available_stock %}
-            {% if stock <= 0 %}
-              <span class="badge b-red">Out</span>
-            {% elif stock <= 5 %}
-              <span class="badge b-amber">{{ stock|qty }} {{ unit }} left</span>
-            {% else %}
-              <span class="badge b-green">{{ stock|qty }} {{ unit }} left</span>
-            {% endif %}
-            {% if reserved_stock %}
-              <div class="text-muted text-xs mt-1">{{ reserved_stock|qty }} {{ unit }} reserved</div>
-            {% endif %}
+            <div class="fo-stack">
+              {% set stock = available_stock %}
+              {% if stock <= 0 %}
+                <span class="badge b-red">Out</span>
+              {% elif stock <= 5 %}
+                <span class="badge b-amber">{{ stock|qty }} {{ unit }} left</span>
+              {% else %}
+                <span class="badge b-green">{{ stock|qty }} {{ unit }} left</span>
+              {% endif %}
+              {% if reserved_stock %}
+                <div class="text-muted text-xs">{{ reserved_stock|qty }} {{ unit }} reserved</div>
+              {% endif %}
+            </div>
           </td>
-          <td class="font-bold text-success" data-label="Total">₱{{ "%.2f"|format(o.total_price) }}</td>
-          <td data-label="Payment"><span class="badge b-gray">{{ o.payment_method }}</span></td>
-          <td data-label="AI Risk">
-            {# AI Risk Badge — loaded client-side via data attributes #}
-            {% if o.status == 'Pending' %}
-            <span class="ai-risk-badge"
-                  data-order-id="{{ o.id }}"
-                  data-product="{{ o.product.name }}"
-                  data-buyer-loc="{{ o.buyer.location or '' }}"
-                  data-farmer-loc="{{ o.product.farmer.location if o.product.farmer else '' }}"
-                  data-price="{{ o.product.price or 0 }}"
-                  data-qty="{{ o.quantity or 1 }}"
-                  data-total="{{ o.total_price or 0 }}"
-                  data-payment="{{ o.payment_method or 'COD' }}"
-                  style="font-size:11px;padding:3px 8px">
-              <span style="color:var(--muted);font-style:italic;font-size:11px">checking…</span>
-            </span>
-            {% else %}
-              <span class="badge b-gray" style="font-size:11px">N/A</span>
-            {% endif %}
+          <td data-label="Total &amp; Payment">
+            <div class="fo-stack">
+              <span class="font-bold text-success">&#8369;{{ "%.2f"|format(o.total_price) }}</span>
+              <span class="badge b-gray">{{ o.payment_method }}</span>
+            </div>
           </td>
-          <td data-label="Complaint Risk">
-            {# Complaint Risk Badge — loaded client-side via data attributes #}
-            {% if o.status == 'Pending' %}
-            <span class="ai-complaint-badge"
-                  data-product="{{ o.product.name }}"
-                  data-total="{{ o.total_price or 0 }}"
-                  data-payment="{{ o.payment_method or 'COD' }}"
-                  data-days="3"
-                  style="font-size:11px;padding:3px 8px">
-              <span style="color:var(--muted);font-style:italic;font-size:11px">checking…</span>
-            </span>
-            {% else %}
-              <span class="badge b-gray" style="font-size:11px">N/A</span>
-            {% endif %}
+          <td data-label="AI Risk Signals">
+            <div class="fo-signals">
+              <div class="fo-signal-row">
+                <span class="fo-signal-lbl">Cancel</span>
+                {% if o.status == 'Pending' %}
+                <span class="ai-risk-badge"
+                      data-order-id="{{ o.id }}"
+                      data-product="{{ o.product.name }}"
+                      data-buyer-loc="{{ o.buyer.location or '' }}"
+                      data-farmer-loc="{{ o.product.farmer.location if o.product.farmer else '' }}"
+                      data-price="{{ o.product.price or 0 }}"
+                      data-qty="{{ o.quantity or 1 }}"
+                      data-total="{{ o.total_price or 0 }}"
+                      data-payment="{{ o.payment_method or 'COD' }}"
+                      style="font-size:11px">
+                  <span style="color:var(--txt3);font-style:italic;font-size:11px">checking…</span>
+                </span>
+                {% else %}
+                  <span class="badge b-gray" style="font-size:11px">N/A</span>
+                {% endif %}
+              </div>
+              <div class="fo-signal-row">
+                <span class="fo-signal-lbl">Complaint</span>
+                {% if o.status == 'Pending' %}
+                <span class="ai-complaint-badge"
+                      data-product="{{ o.product.name }}"
+                      data-total="{{ o.total_price or 0 }}"
+                      data-payment="{{ o.payment_method or 'COD' }}"
+                      data-days="3"
+                      style="font-size:11px">
+                  <span style="color:var(--txt3);font-style:italic;font-size:11px">checking…</span>
+                </span>
+                {% else %}
+                  <span class="badge b-gray" style="font-size:11px">N/A</span>
+                {% endif %}
+              </div>
+            </div>
           </td>
-          <td data-label="Status">
-            {% if o.status == 'Pending' %}
-              <span class="badge b-amber">Pending</span>
-            {% elif o.status == 'Approved' %}
-              <span class="badge b-green">Approved</span>
-            {% elif o.status in ['Cancelled', 'Rejected'] %}
-              <span class="badge b-red">{{ o.status }}</span>
-            {% else %}
-              <span class="badge b-gray">{{ o.status }}</span>
-            {% endif %}
-          </td>
-          <td data-label="Tracking">
-            {% if o.status in ['Cancelled', 'Rejected'] %}
-              <span class="badge b-red">{{ o.status }}</span>
-            {% elif o.delivery and o.delivery.status == 'Delivered' %}
-              <span class="badge b-green">{{ o.delivery.status }}</span>
-            {% elif o.delivery and o.delivery.status == 'Out for Delivery' %}
-              <span class="badge b-blue">{{ o.delivery.status }}</span>
-            {% elif o.delivery and o.delivery.status == 'Address Confirmation' %}
-              <span class="badge b-amber">{{ o.delivery.status }}</span>
-            {% elif o.delivery %}
-              <span class="badge b-gray">{{ o.delivery.status }}</span>
-            {% else %}
-              <span class="badge b-gray">Processing</span>
-            {% endif %}
+          <td data-label="Status &amp; Tracking">
+            <div class="fo-stack">
+              {% if o.status == 'Pending' %}
+                <span class="badge b-amber">Pending</span>
+              {% elif o.status == 'Approved' %}
+                <span class="badge b-green">Approved</span>
+              {% elif o.status in ['Cancelled', 'Rejected'] %}
+                <span class="badge b-red">{{ o.status }}</span>
+              {% else %}
+                <span class="badge b-gray">{{ o.status }}</span>
+              {% endif %}
+
+              {% if o.status in ['Cancelled', 'Rejected'] %}
+                <span class="text-muted text-xs">Order closed</span>
+              {% elif o.delivery and o.delivery.status == 'Delivered' %}
+                <span class="badge b-green">{{ o.delivery.status }}</span>
+              {% elif o.delivery and o.delivery.status == 'Out for Delivery' %}
+                <span class="badge b-blue">{{ o.delivery.status }}</span>
+              {% elif o.delivery and o.delivery.status == 'Address Confirmation' %}
+                <span class="badge b-amber">{{ o.delivery.status }}</span>
+              {% elif o.delivery %}
+                <span class="badge b-gray">{{ o.delivery.status }}</span>
+              {% else %}
+                <span class="badge b-gray">Processing</span>
+              {% endif %}
+            </div>
           </td>
           <td data-label="Action">
             {% if o.status == 'Pending' %}
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2" style="flex-wrap:wrap">
                 <form method="POST" action="{{ url_for('approve_order', order_id=o.id) }}" style="margin:0">
                   <button type="submit" class="btn btn-primary btn-sm">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
@@ -139,10 +357,10 @@
                 <a href="{{ url_for('order_detail', order_id=o.id) }}" class="btn btn-secondary btn-sm">Chat</a>
               </div>
             {% else %}
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2" style="flex-wrap:wrap">
                 <a href="{{ url_for('order_detail', order_id=o.id) }}" class="btn btn-secondary btn-sm">Manage</a>
                 {% if o.delivery and o.delivery.status == 'Delivered' %}
-                  <a href="{{ url_for('order_receipt', order_id=o.id) }}" class="btn btn-secondary btn-sm">Receipt</a>
+                  <a href="{{ url_for('order_receipt', order_id=o.id) }}" class="btn btn-primary btn-sm">Receipt</a>
                 {% endif %}
               </div>
             {% endif %}
@@ -151,6 +369,13 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
+
+  <div class="fo-empty" id="foEmpty">
+    <div style="font-size:44px;margin-bottom:10px">🔍</div>
+    <div class="font-bold" style="font-size:17px;margin-bottom:6px">No received orders match this filter</div>
+    <div class="text-muted text-sm" style="margin-bottom:16px">Try a different search term or reset your filter selection.</div>
+    <button type="button" class="btn btn-secondary btn-sm" id="foReset">Reset filters</button>
   </div>
 </div>
 
@@ -170,6 +395,57 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+  /* ── Search & Status Filter ──────────────────────────────────────────────── */
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#foBody .fo-row'));
+  if (rows.length) {
+    var search = document.getElementById('foSearch');
+    var clearBtn = document.getElementById('foClear');
+    var chips = Array.prototype.slice.call(document.querySelectorAll('#foChips .fo-chip'));
+    var resultLine = document.getElementById('foResultLine');
+    var emptyBox = document.getElementById('foEmpty');
+    var resetBtn = document.getElementById('foReset');
+    var tableWrap = document.querySelector('#foCard .table-wrap');
+    var activeFilter = 'all';
+
+    function applyFilter() {
+      var q = search.value.trim().toLowerCase();
+      clearBtn.classList.toggle('on', q.length > 0);
+      var shown = 0;
+      rows.forEach(function (r) {
+        var okBucket = activeFilter === 'all' || r.getAttribute('data-bucket') === activeFilter;
+        var okSearch = !q || r.getAttribute('data-search').indexOf(q) !== -1;
+        var show = okBucket && okSearch;
+        r.classList.toggle('is-hidden', !show);
+        if (show) shown++;
+      });
+
+      var filtered = q || activeFilter !== 'all';
+      resultLine.textContent = filtered ? ('Showing ' + shown + ' of ' + rows.length + ' order' + (rows.length !== 1 ? 's' : '')) : '';
+      emptyBox.classList.toggle('on', shown === 0);
+      if (tableWrap) tableWrap.style.display = shown === 0 ? 'none' : '';
+    }
+
+    var timer;
+    search.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(applyFilter, 100); });
+    clearBtn.addEventListener('click', function () { search.value = ''; applyFilter(); search.focus(); });
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        chips.forEach(function (c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        activeFilter = chip.getAttribute('data-filter');
+        applyFilter();
+      });
+    });
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        search.value = '';
+        activeFilter = 'all';
+        chips.forEach(function (c) { c.classList.toggle('active', c.getAttribute('data-filter') === 'all'); });
+        applyFilter();
+      });
+    }
+  }
 
   /* ── AI Risk Badges ──────────────────────────────────────────────────────── */
   document.querySelectorAll('.ai-risk-badge').forEach(function (badge) {

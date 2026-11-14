@@ -6,46 +6,882 @@
   <title>Sign In — AgriChain</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      min-height: 100vh;
+      background: #0a1f13;
+      color: #0f172a;
+      overflow-x: hidden;
+    }
+
+    /* ── Split layout ─────────────────────────── */
+    .login-shell {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Left branding panel ─────────────────── */
+    .login-brand {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 48px;
+      background: linear-gradient(160deg, #052e16 0%, #14532d 40%, #0f766e 100%);
+      overflow: hidden;
+    }
+
+    /* Animated background shapes */
+    .login-brand::before {
+      content: '';
+      position: absolute;
+      top: -20%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(34,197,94,.15) 0%, transparent 70%);
+      animation: floatOrb 12s ease-in-out infinite;
+    }
+    .login-brand::after {
+      content: '';
+      position: absolute;
+      bottom: -15%;
+      left: -8%;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(15,118,110,.20) 0%, transparent 70%);
+      animation: floatOrb 15s ease-in-out infinite reverse;
+    }
+
+    @keyframes floatOrb {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -20px) scale(1.05); }
+      66% { transform: translate(-20px, 15px) scale(0.95); }
+    }
+
+    /* Floating leaf particles */
+    .leaf-particle {
+      position: absolute;
+      font-size: 20px;
+      opacity: 0;
+      animation: leafFloat linear infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .leaf-particle:nth-child(1) { left: 10%; font-size: 16px; animation-duration: 18s; animation-delay: 0s; }
+    .leaf-particle:nth-child(2) { left: 30%; font-size: 22px; animation-duration: 22s; animation-delay: 3s; }
+    .leaf-particle:nth-child(3) { left: 55%; font-size: 14px; animation-duration: 20s; animation-delay: 6s; }
+    .leaf-particle:nth-child(4) { left: 75%; font-size: 18px; animation-duration: 24s; animation-delay: 9s; }
+    .leaf-particle:nth-child(5) { left: 90%; font-size: 15px; animation-duration: 19s; animation-delay: 12s; }
+    .leaf-particle:nth-child(6) { left: 45%; font-size: 20px; animation-duration: 21s; animation-delay: 4s; }
+
+    @keyframes leafFloat {
+      0%   { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10%  { opacity: .35; }
+      90%  { opacity: .35; }
+      100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+    }
+
+    /* Grid pattern overlay */
+    .brand-grid {
+      position: absolute;
+      inset: 0;
+      opacity: .06;
+      background-image:
+        linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .brand-content {
+      position: relative;
+      z-index: 2;
+      max-width: 480px;
+    }
+
+    .brand-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .brand-logo-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: rgba(34,197,94,.2);
+      border: 1px solid rgba(34,197,94,.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      backdrop-filter: blur(10px);
+    }
+    .brand-logo-text {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.02em;
+    }
+    .brand-logo-sub {
+      font-size: 11px;
+      color: #4ade80;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .brand-headline {
+      font-size: 42px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.15;
+      letter-spacing: -.03em;
+      margin-bottom: 16px;
+    }
+    .brand-headline span {
+      background: linear-gradient(135deg, #4ade80, #22d3ee);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .brand-desc {
+      font-size: 16px;
+      color: rgba(248,250,252,.65);
+      line-height: 1.7;
+      margin-bottom: 40px;
+      max-width: 400px;
+    }
+
+    /* Stats row */
+    .brand-stats {
+      display: flex;
+      gap: 32px;
+    }
+    .brand-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .brand-stat-val {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.03em;
+    }
+    .brand-stat-label {
+      font-size: 12px;
+      color: rgba(248,250,252,.5);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    /* Testimonial card */
+    .brand-testimonial {
+      margin-top: 40px;
+      padding: 20px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+    }
+    .testimonial-text {
+      font-size: 14px;
+      color: rgba(248,250,252,.78);
+      line-height: 1.65;
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .testimonial-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #22c55e, #0f766e);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .testimonial-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .testimonial-role {
+      font-size: 11px;
+      color: rgba(248,250,252,.5);
+    }
+
+    /* ── Right form panel ────────────────────── */
+    .login-form-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 40px;
+      background: #fff;
+      position: relative;
+    }
+
+    /* Subtle texture */
+    .login-form-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(34,197,94,.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(15,118,110,.03) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .form-container {
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .form-header {
+      margin-bottom: 32px;
+    }
+    .form-greeting {
+      font-size: 14px;
+      font-weight: 600;
+      color: #16a34a;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+    }
+    .form-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -.03em;
+      margin-bottom: 6px;
+    }
+    .form-subtitle {
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    /* Alert */
+    .login-alert {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid #fca5a5;
+      background: #fef2f2;
+      color: #b91c1c;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 24px;
+      animation: shakeAlert .4s ease;
+    }
+    .login-alert svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    @keyframes shakeAlert {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+
+    /* Form fields */
+    .field {
+      margin-bottom: 20px;
+    }
+    .field-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+    }
+    .field-input-wrap {
+      position: relative;
+    }
+    .field-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: #94a3b8;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+      transition: color .2s;
+    }
+    .field-input {
+      width: 100%;
+      height: 50px;
+      padding: 0 16px 0 44px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      font-size: 15px;
+      font-family: inherit;
+      color: #0f172a;
+      background: #f8fafc;
+      outline: none;
+      transition: all .2s ease;
+    }
+    .field-input::placeholder {
+      color: #94a3b8;
+    }
+    .field-input:hover {
+      border-color: #cbd5e1;
+      background: #fff;
+    }
+    .field-input:focus {
+      border-color: #16a34a;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(22,163,74,.10);
+    }
+    .field-input:focus ~ .field-icon,
+    .field-input:focus ~ .field-icon {
+      color: #16a34a;
+    }
+    /* When input is focused, style its sibling icon */
+    .field-input:focus + .field-icon-left {
+      color: #16a34a;
+    }
+
+    /* Password toggle */
+    .pwd-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      transition: all .15s;
+    }
+    .pwd-toggle:hover {
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .pwd-toggle svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Remember + forgot */
+    .form-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #475569;
+      user-select: none;
+    }
+    .remember-me input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #16a34a;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .forgot-link {
+      font-size: 13px;
+      color: #16a34a;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color .15s;
+    }
+    .forgot-link:hover {
+      color: #15803d;
+    }
+
+    /* Submit button */
+    .login-btn {
+      width: 100%;
+      height: 52px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      color: #fff;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all .2s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(22,163,74,.3);
+    }
+    .login-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(22,163,74,.35);
+    }
+    .login-btn:active {
+      transform: translateY(0) scale(.99);
+    }
+    .login-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .login-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform .2s;
+    }
+    .login-btn:hover svg {
+      transform: translateX(3px);
+    }
+
+    /* Loading state */
+    .login-btn.is-loading {
+      pointer-events: none;
+      opacity: .85;
+    }
+    .login-btn.is-loading svg {
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Divider */
+    .form-divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 24px 0;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .form-divider::before,
+    .form-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    /* Security badge */
+    .security-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #f0fdf4;
+      border: 1px solid #dcfce7;
+      font-size: 12px;
+      color: #166534;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .security-badge svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Register link */
+    .register-link {
+      text-align: center;
+      font-size: 14px;
+      color: #64748b;
+    }
+    .register-link a {
+      color: #16a34a;
+      font-weight: 700;
+      text-decoration: none;
+      transition: color .15s;
+    }
+    .register-link a:hover {
+      color: #15803d;
+      text-decoration: underline;
+    }
+
+    /* ── Responsive ───────────────────────────── */
+    @media (max-width: 1024px) {
+      .login-shell {
+        grid-template-columns: 1fr;
+      }
+      .login-brand {
+        display: none;
+      }
+      .login-form-panel {
+        min-height: 100vh;
+        padding: 32px 24px;
+      }
+    }
+
+    @media (min-width: 1025px) and (max-width: 1280px) {
+      .login-brand {
+        padding: 36px;
+      }
+      .brand-headline {
+        font-size: 34px;
+      }
+    }
+
+    /* Mobile-only branding (shown when left panel hidden) */
+    .mobile-brand {
+      display: none;
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .mobile-brand-logo {
+      font-size: 36px;
+      margin-bottom: 4px;
+    }
+    .mobile-brand-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: #14532d;
+      letter-spacing: -.02em;
+    }
+    .mobile-brand-sub {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    @media (max-width: 1024px) {
+      .mobile-brand {
+        display: block;
+      }
+      .login-form-panel {
+        background: linear-gradient(180deg, #f0fdf4 0%, #fff 30%);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .form-title {
+        font-size: 24px;
+      }
+      .field-input {
+        height: 48px;
+        font-size: 16px; /* Prevent iOS zoom */
+      }
+      .login-btn {
+        height: 50px;
+      }
+      .brand-stats {
+        gap: 20px;
+      }
+    }
+
+    /* ── Animations ────────────────────────────── */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: none; }
+    }
+    .form-container > * {
+      animation: fadeInUp .5s ease both;
+    }
+    .form-container > :nth-child(1) { animation-delay: .05s; }
+    .form-container > :nth-child(2) { animation-delay: .10s; }
+    .form-container > :nth-child(3) { animation-delay: .15s; }
+    .form-container > :nth-child(4) { animation-delay: .20s; }
+    .form-container > :nth-child(5) { animation-delay: .25s; }
+    .form-container > :nth-child(6) { animation-delay: .30s; }
+    .form-container > :nth-child(7) { animation-delay: .35s; }
+    .form-container > :nth-child(8) { animation-delay: .40s; }
+    .form-container > :nth-child(9) { animation-delay: .45s; }
+
+    .brand-content > * {
+      animation: fadeInUp .6s ease both;
+    }
+    .brand-content > :nth-child(1) { animation-delay: .1s; }
+    .brand-content > :nth-child(2) { animation-delay: .2s; }
+    .brand-content > :nth-child(3) { animation-delay: .3s; }
+    .brand-content > :nth-child(4) { animation-delay: .4s; }
+    .brand-content > :nth-child(5) { animation-delay: .5s; }
+  </style>
 </head>
 <body>
-<div class="auth-wrap">
-  <div class="auth-card">
 
-    <div class="auth-header">
-      <div class="auth-logo">🌾</div>
-      <div class="auth-title">Welcome back</div>
-      <div class="auth-sub">Sign in to AgriChain Supply Network</div>
-    </div>
+<div class="login-shell">
 
-    <div class="auth-body">
-      {% if error %}
-        <div class="alert alert-danger" style="margin-bottom:16px">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <span>{{ error }}</span>
+  <!-- ── Left: Branding Panel ──────────────────────────────── -->
+  <div class="login-brand">
+    <div class="brand-grid"></div>
+
+    <!-- Floating leaf particles -->
+    <div class="leaf-particle">🍃</div>
+    <div class="leaf-particle">🌿</div>
+    <div class="leaf-particle">🍂</div>
+    <div class="leaf-particle">🌱</div>
+    <div class="leaf-particle">🍃</div>
+    <div class="leaf-particle">🌿</div>
+
+    <div class="brand-content">
+      <div class="brand-logo">
+        <div class="brand-logo-icon">🌾</div>
+        <div>
+          <div class="brand-logo-text">AgriChain</div>
+          <div class="brand-logo-sub">Supply Network</div>
         </div>
+      </div>
+
+      <h1 class="brand-headline">
+        Smarter Farming,<br>
+        <span>Stronger Connections</span>
+      </h1>
+
+      <p class="brand-desc">
+        From farm to table — track, trade, and manage your agricultural supply chain
+        with real-time insights and AI-powered decisions.
+      </p>
+
+      <div class="brand-stats">
+        <div class="brand-stat">
+          <div class="brand-stat-val">2.4K+</div>
+          <div class="brand-stat-label">Active Farmers</div>
+        </div>
+        <div class="brand-stat">
+          <div class="brand-stat-val">15K+</div>
+          <div class="brand-stat-label">Orders Fulfilled</div>
+        </div>
+        <div class="brand-stat">
+          <div class="brand-stat-val">98%</div>
+          <div class="brand-stat-label">Satisfaction</div>
+        </div>
+      </div>
+
+      <div class="brand-testimonial">
+        <div class="testimonial-text">
+          "AgriChain transformed how I sell my produce. I went from selling at the local market
+          to reaching buyers across three provinces. My income has doubled."
+        </div>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">MR</div>
+          <div>
+            <div class="testimonial-name">Maria Reyes</div>
+            <div class="testimonial-role">Rice Farmer · Nueva Ecija</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Right: Login Form Panel ────────────────────────── -->
+  <div class="login-form-panel">
+    <div class="form-container">
+
+      <!-- Mobile-only branding -->
+      <div class="mobile-brand">
+        <div class="mobile-brand-logo">🌾</div>
+        <div class="mobile-brand-name">AgriChain</div>
+        <div class="mobile-brand-sub">Supply Network</div>
+      </div>
+
+      <!-- Header -->
+      <div class="form-header">
+        <div class="form-greeting">Welcome back 👋</div>
+        <h2 class="form-title">Sign in to your account</h2>
+        <p class="form-subtitle">Enter your credentials to access the supply network</p>
+      </div>
+
+      <!-- Error alert -->
+      {% if error %}
+      <div class="login-alert">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
       {% endif %}
 
-      <form method="POST" action="/login">
-        <div class="form-group">
-          <label class="form-label" for="username">Username</label>
-          <input class="form-control" id="username" name="username" placeholder="Enter your username" required autofocus>
+      <!-- Form -->
+      <form method="POST" action="/login" id="loginForm">
+        <!-- Username -->
+        <div class="field">
+          <label class="field-label" for="username">Username</label>
+          <div class="field-input-wrap">
+            <input
+              class="field-input"
+              id="username"
+              name="username"
+              type="text"
+              placeholder="Enter your username"
+              autocomplete="username"
+              required
+              autofocus
+            >
+            <svg class="field-icon" viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
         </div>
 
-        <div class="form-group" style="margin-bottom:20px">
-          <label class="form-label" for="password">Password</label>
-          <input class="form-control" id="password" name="password" type="password" placeholder="Enter your password" required>
+        <!-- Password -->
+        <div class="field">
+          <div class="field-label">
+            <label for="password">Password</label>
+          </div>
+          <div class="field-input-wrap">
+            <input
+              class="field-input"
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+              style="padding-right: 52px;"
+            >
+            <svg class="field-icon" viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            <button type="button" class="pwd-toggle" id="pwdToggle" aria-label="Toggle password visibility">
+              <svg viewBox="0 0 24 24" id="eyeIcon">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
+        <!-- Options row -->
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" name="remember">
+            Remember me
+          </label>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="login-btn" id="loginBtn">
+          Sign In
+          <svg viewBox="0 0 24 24">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12,5 19,12 12,19"/>
+          </svg>
+        </button>
       </form>
-    </div>
 
-    <div class="auth-footer">
-      Don't have an account? <a href="{{ url_for('register') }}">Create one →</a>
-    </div>
+      <!-- Divider -->
+      <div class="form-divider">secured login</div>
 
+      <!-- Security badge -->
+      <div class="security-badge">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Your data is protected with end-to-end encryption
+      </div>
+
+      <!-- Register link -->
+      <div class="register-link">
+        Don't have an account? <a href="{{ url_for('register') }}">Create one for free →</a>
+      </div>
+
+    </div>
   </div>
+
 </div>
+
+<script>
+  // Password visibility toggle
+  const pwdInput = document.getElementById('password');
+  const pwdToggle = document.getElementById('pwdToggle');
+  const eyeIcon = document.getElementById('eyeIcon');
+
+  pwdToggle.addEventListener('click', () => {
+    const isPassword = pwdInput.type === 'password';
+    pwdInput.type = isPassword ? 'text' : 'password';
+    eyeIcon.innerHTML = isPassword
+      ? '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
+      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  });
+
+  // Loading state on submit
+  const loginForm = document.getElementById('loginForm');
+  const loginBtn = document.getElementById('loginBtn');
+
+  loginForm.addEventListener('submit', () => {
+    loginBtn.classList.add('is-loading');
+    loginBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.5">
+        <path d="M21 12a9 9 0 11-6.219-8.56"/>
+      </svg>
+      Signing in...
+    `;
+  });
+</script>
+
 </body>
 </html>

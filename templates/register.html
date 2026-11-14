@@ -3,74 +3,446 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register — AgriChain</title>
+  <title>Create Account — AgriChain</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      min-height: 100vh; background: #0a1f13; color: #0f172a; overflow-x: hidden;
+    }
+
+    .shell { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+
+    /* ── Brand panel ── */
+    .brand {
+      position: relative; display: flex; flex-direction: column; justify-content: center;
+      padding: 48px; overflow: hidden;
+      background: linear-gradient(160deg, #052e16 0%, #14532d 40%, #0f766e 100%);
+    }
+    .brand::before {
+      content: ''; position: absolute; top: -20%; right: -10%; width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(34,197,94,.15) 0%, transparent 70%);
+      animation: orb 12s ease-in-out infinite;
+    }
+    .brand::after {
+      content: ''; position: absolute; bottom: -15%; left: -8%; width: 500px; height: 500px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(15,118,110,.2) 0%, transparent 70%);
+      animation: orb 15s ease-in-out infinite reverse;
+    }
+    @keyframes orb {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33% { transform: translate(30px,-20px) scale(1.05); }
+      66% { transform: translate(-20px,15px) scale(.95); }
+    }
+    .brand-grid {
+      position: absolute; inset: 0; opacity: .06;
+      background-image: linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .brand-content { position: relative; z-index: 2; max-width: 480px; }
+    .brand-content > * { animation: fadeUp .6s ease both; }
+    .brand-content > :nth-child(1) { animation-delay: .1s; }
+    .brand-content > :nth-child(2) { animation-delay: .2s; }
+    .brand-content > :nth-child(3) { animation-delay: .3s; }
+    .brand-content > :nth-child(4) { animation-delay: .4s; }
+
+    .logo { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+    .logo-icon {
+      width: 48px; height: 48px; border-radius: 14px; font-size: 24px;
+      background: rgba(34,197,94,.2); border: 1px solid rgba(34,197,94,.3);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-text { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.02em; }
+    .logo-sub { font-size: 11px; color: #4ade80; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+
+    .headline { font-size: 40px; font-weight: 800; color: #fff; line-height: 1.15; letter-spacing: -.03em; margin-bottom: 16px; }
+    .headline span { background: linear-gradient(135deg, #4ade80, #22d3ee); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .desc { font-size: 16px; color: rgba(248,250,252,.65); line-height: 1.7; margin-bottom: 32px; max-width: 420px; }
+
+    .perks { display: grid; gap: 12px; }
+    .perk {
+      display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px; backdrop-filter: blur(10px);
+    }
+    .perk-ico {
+      width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; font-size: 18px;
+      background: rgba(74,222,128,.18); display: flex; align-items: center; justify-content: center;
+    }
+    .perk-title { font-size: 14px; font-weight: 700; color: #fff; }
+    .perk-text { font-size: 12.5px; color: rgba(248,250,252,.62); line-height: 1.5; margin-top: 2px; }
+
+    /* ── Form panel ── */
+    .panel {
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px; background: #fff; position: relative;
+    }
+    .panel::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(circle at 20% 80%, rgba(34,197,94,.04) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(15,118,110,.03) 0%, transparent 50%);
+    }
+    .form-box { width: 100%; max-width: 420px; position: relative; z-index: 1; }
+    .form-box > * { animation: fadeUp .5s ease both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+    .mobile-brand { display: none; text-align: center; margin-bottom: 22px; }
+    .mobile-brand .m-logo { font-size: 34px; }
+    .mobile-brand .m-name { font-size: 20px; font-weight: 800; color: #14532d; letter-spacing: -.02em; }
+    .mobile-brand .m-sub { font-size: 12px; color: #64748b; font-weight: 500; }
+
+    .greeting { font-size: 13px; font-weight: 700; color: #16a34a; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+    .title { font-size: 28px; font-weight: 800; letter-spacing: -.03em; margin-bottom: 6px; }
+    .subtitle { font-size: 14px; color: #64748b; margin-bottom: 26px; }
+
+    .alert {
+      display: flex; align-items: center; gap: 10px; padding: 12px 16px; margin-bottom: 20px;
+      border-radius: 12px; border: 1px solid #fca5a5; background: #fef2f2; color: #b91c1c;
+      font-size: 13px; font-weight: 500; animation: shake .4s ease;
+    }
+    .alert svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    @keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+
+    .field { margin-bottom: 18px; }
+    .label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #334155; }
+    .label .opt { color: #94a3b8; font-weight: 500; }
+    .wrap { position: relative; }
+    .icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px;
+      color: #94a3b8; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+      pointer-events: none; transition: color .2s;
+    }
+    .input {
+      width: 100%; height: 50px; padding: 0 16px 0 44px; border: 1.5px solid #e2e8f0; border-radius: 14px;
+      font-size: 15px; font-family: inherit; color: #0f172a; background: #f8fafc; outline: none; transition: all .2s ease;
+    }
+    .input::placeholder { color: #94a3b8; }
+    .input:hover { border-color: #cbd5e1; background: #fff; }
+    .input:focus { border-color: #16a34a; background: #fff; box-shadow: 0 0 0 4px rgba(22,163,74,.1); }
+    .input:focus + .icon { color: #16a34a; }
+    .input.pw { padding-right: 52px; }
+    .input.invalid { border-color: #ef4444; box-shadow: 0 0 0 4px rgba(239,68,68,.08); }
+
+    .toggle {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px;
+      border: none; background: none; cursor: pointer; border-radius: 10px; color: #94a3b8;
+      display: flex; align-items: center; justify-content: center; transition: all .15s;
+    }
+    .toggle:hover { background: #f1f5f9; color: #475569; }
+    .toggle svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .hint { font-size: 12px; margin-top: 6px; color: #64748b; min-height: 16px; }
+    .hint.bad { color: #b91c1c; }
+    .hint.good { color: #15803d; }
+
+    /* Strength meter */
+    .meter { display: flex; gap: 5px; margin-top: 8px; }
+    .meter span { flex: 1; height: 5px; border-radius: 99px; background: #e2e8f0; transition: background .25s; }
+    .meter.s1 span:nth-child(1) { background: #ef4444; }
+    .meter.s2 span:nth-child(-n+2) { background: #f59e0b; }
+    .meter.s3 span:nth-child(-n+3) { background: #84cc16; }
+    .meter.s4 span { background: #16a34a; }
+    .strength-text { font-size: 12px; font-weight: 600; color: #64748b; margin-top: 6px; min-height: 16px; }
+
+    /* Role cards */
+    .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .role { position: relative; cursor: pointer; display: block; }
+    .role input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; cursor: pointer; margin: 0; }
+    .role-body {
+      height: 100%; padding: 16px 14px; border: 1.5px solid #e2e8f0; border-radius: 16px; background: #f8fafc;
+      text-align: center; transition: all .2s ease;
+    }
+    .role:hover .role-body { border-color: #86efac; background: #fff; transform: translateY(-1px); }
+    .role input:focus-visible + .role-body { box-shadow: 0 0 0 4px rgba(22,163,74,.18); border-color: #16a34a; }
+    .role input:checked + .role-body {
+      border-color: #16a34a; background: linear-gradient(180deg, #f0fdf4 0%, #fff 100%);
+      box-shadow: 0 6px 18px rgba(22,163,74,.15);
+    }
+    .role-emoji { font-size: 28px; line-height: 1; margin-bottom: 8px; }
+    .role-name { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .role-sub { font-size: 12px; color: #64748b; margin-top: 3px; line-height: 1.4; }
+    .role-check {
+      position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 50%;
+      background: #16a34a; color: #fff; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: scale(.5); transition: all .2s;
+    }
+    .role-check svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+    .role input:checked ~ .role-check { opacity: 1; transform: scale(1); }
+
+    .btn {
+      width: 100%; height: 52px; border: none; border-radius: 14px; margin-top: 8px;
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #fff;
+      font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 4px 14px rgba(22,163,74,.3); transition: all .2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(22,163,74,.35); }
+    .btn:active { transform: scale(.99); }
+    .btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+    .btn:hover svg { transform: translateX(3px); }
+    .btn.loading { pointer-events: none; opacity: .85; }
+    .btn.loading svg { animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .terms { text-align: center; font-size: 12px; color: #94a3b8; margin-top: 14px; }
+    .switch { text-align: center; font-size: 14px; color: #64748b; margin-top: 20px; }
+    .switch a { color: #16a34a; font-weight: 700; text-decoration: none; }
+    .switch a:hover { color: #15803d; text-decoration: underline; }
+
+    @media (max-width: 1024px) {
+      .shell { grid-template-columns: 1fr; }
+      .brand { display: none; }
+      .panel { min-height: 100vh; padding: 28px 20px; background: linear-gradient(180deg, #f0fdf4 0%, #fff 30%); }
+      .mobile-brand { display: block; }
+    }
+    @media (max-width: 480px) {
+      .title { font-size: 24px; }
+      .input { height: 48px; font-size: 16px; }
+      .roles { gap: 10px; }
+      .role-body { padding: 14px 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
 </head>
 <body>
-<div class="auth-wrap">
-  <div class="auth-card">
+<div class="shell">
 
-    <div class="auth-header">
-      <div class="auth-logo">🌱</div>
-      <div class="auth-title">Join AgriChain</div>
-      <div class="auth-sub">Create your supply network account</div>
-    </div>
-
-    <div class="auth-body">
-      {% if error %}
-        <div class="alert alert-danger">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <span>{{ error }}</span>
+  <!-- Brand panel -->
+  <div class="brand">
+    <div class="brand-grid"></div>
+    <div class="brand-content">
+      <div class="logo">
+        <div class="logo-icon">🌱</div>
+        <div>
+          <div class="logo-text">AgriChain</div>
+          <div class="logo-sub">Supply Network</div>
         </div>
+      </div>
+
+      <h1 class="headline">Join the network<br><span>growing together</span></h1>
+      <p class="desc">Create a free account in under a minute and start trading farm-fresh produce directly.</p>
+
+      <div class="perks">
+        <div class="perk">
+          <div class="perk-ico">🌾</div>
+          <div>
+            <div class="perk-title">Farmers sell direct</div>
+            <div class="perk-text">List your crops, set your own prices, and get AI-powered market insights.</div>
+          </div>
+        </div>
+        <div class="perk">
+          <div class="perk-ico">🛒</div>
+          <div>
+            <div class="perk-title">Buyers shop fresh</div>
+            <div class="perk-text">Browse approved local products and track every order to your door.</div>
+          </div>
+        </div>
+        <div class="perk">
+          <div class="perk-ico">🔒</div>
+          <div>
+            <div class="perk-title">Safe &amp; transparent</div>
+            <div class="perk-text">Admin-reviewed listings, order tracking, and complaint support.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form panel -->
+  <div class="panel">
+    <div class="form-box">
+
+      <div class="mobile-brand">
+        <div class="m-logo">🌱</div>
+        <div class="m-name">AgriChain</div>
+        <div class="m-sub">Supply Network</div>
+      </div>
+
+      <div>
+        <div class="greeting">Get started 🚀</div>
+        <h2 class="title">Create your account</h2>
+        <p class="subtitle">Join the AgriChain supply network today</p>
+      </div>
+
+      {% if error %}
+      <div class="alert" role="alert">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>{{ error }}</span>
+      </div>
       {% endif %}
 
-      <form method="POST">
-        <div class="form-group">
-          <label class="form-label" for="username">Username</label>
-          <input class="form-control" id="username" name="username" placeholder="Choose a username" required autofocus>
-        </div>
+      <form method="POST" id="regForm" novalidate>
+        {% set sel_role = request.form.get('role', '') %}
 
-        <div class="form-group">
-          <label class="form-label" for="password">Password</label>
-          <input class="form-control" id="password" name="password" type="password" placeholder="Create a password" required>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="location">Location</label>
-          <input class="form-control" id="location" name="location" placeholder="e.g. Quezon City, Philippines">
-        </div>
-
-        <div class="form-group" style="margin-bottom:20px">
-          <label class="form-label">I am a…</label>
-          <div class="radio-group">
-            <label class="radio-card">
-              <input type="radio" name="role" value="farmer" required>
-              <div>
-                <div class="radio-card-label">🌾 Farmer</div>
-                <div class="radio-card-sub">List products and receive orders</div>
+        <!-- Role -->
+        <div class="field">
+          <span class="label">I am a…</span>
+          <div class="roles" role="radiogroup" aria-label="Account type">
+            <label class="role">
+              <input type="radio" name="role" value="farmer" {{ 'checked' if sel_role == 'farmer' }} required>
+              <div class="role-body">
+                <div class="role-emoji">🌾</div>
+                <div class="role-name">Farmer</div>
+                <div class="role-sub">List products &amp; receive orders</div>
               </div>
+              <span class="role-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
             </label>
-            <label class="radio-card">
-              <input type="radio" name="role" value="buyer">
-              <div>
-                <div class="radio-card-label">🛒 Buyer</div>
-                <div class="radio-card-sub">Browse and purchase farm products</div>
+            <label class="role">
+              <input type="radio" name="role" value="buyer" {{ 'checked' if sel_role == 'buyer' }}>
+              <div class="role-body">
+                <div class="role-emoji">🛒</div>
+                <div class="role-name">Buyer</div>
+                <div class="role-sub">Browse &amp; buy farm products</div>
               </div>
+              <span class="role-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
             </label>
+          </div>
+          <div class="hint" id="roleHint"></div>
+        </div>
+
+        <!-- Username -->
+        <div class="field">
+          <label class="label" for="username">Username</label>
+          <div class="wrap">
+            <input class="input" id="username" name="username" type="text" placeholder="Choose a username"
+                   autocomplete="username" value="{{ request.form.get('username', '') }}" required autofocus>
+            <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block btn-lg">Create Account</button>
+        <!-- Location -->
+        <div class="field">
+          <label class="label" for="location">Location <span class="opt">(optional)</span></label>
+          <div class="wrap">
+            <input class="input" id="location" name="location" type="text" placeholder="e.g. Quezon City, Philippines"
+                   autocomplete="address-level2" value="{{ request.form.get('location', '') }}">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="field">
+          <label class="label" for="password">Password</label>
+          <div class="wrap">
+            <input class="input pw" id="password" name="password" type="password" placeholder="Create a password"
+                   autocomplete="new-password" required>
+            <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            <button type="button" class="toggle" data-target="password" aria-label="Show or hide password">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="meter" id="meter" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+          <div class="strength-text" id="strengthText">Use 8+ characters with letters, numbers &amp; symbols</div>
+        </div>
+
+        <!-- Confirm (client-side only) -->
+        <div class="field">
+          <label class="label" for="confirm">Confirm password</label>
+          <div class="wrap">
+            <input class="input pw" id="confirm" type="password" placeholder="Re-enter your password" autocomplete="new-password">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <button type="button" class="toggle" data-target="confirm" aria-label="Show or hide confirmation">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="hint" id="confirmHint"></div>
+        </div>
+
+        <button type="submit" class="btn" id="submitBtn">
+          <span id="btnLabel">Create Account</span>
+          <svg viewBox="0 0 24 24" id="btnIcon"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
+        </button>
+        <div class="terms">By creating an account you agree to trade fairly on AgriChain.</div>
       </form>
-    </div>
 
-    <div class="auth-footer">
-      Already have an account? <a href="{{ url_for('login') }}">Sign in →</a>
+      <div class="switch">Already have an account? <a href="{{ url_for('login') }}">Sign in →</a></div>
     </div>
-
   </div>
 </div>
+
+<script>
+(function () {
+  var form = document.getElementById('regForm');
+  var pwd = document.getElementById('password');
+  var confirmEl = document.getElementById('confirm');
+  var username = document.getElementById('username');
+  var meter = document.getElementById('meter');
+  var strengthText = document.getElementById('strengthText');
+  var confirmHint = document.getElementById('confirmHint');
+  var roleHint = document.getElementById('roleHint');
+  var btn = document.getElementById('submitBtn');
+
+  var EYE = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  var EYE_OFF = '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+
+  document.querySelectorAll('.toggle').forEach(function (t) {
+    t.addEventListener('click', function () {
+      var input = document.getElementById(t.getAttribute('data-target'));
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      t.querySelector('svg').innerHTML = show ? EYE_OFF : EYE;
+    });
+  });
+
+  function score(v) {
+    var s = 0;
+    if (v.length >= 8) s++;
+    if (/[a-z]/.test(v) && /[A-Z]/.test(v)) s++;
+    if (/\d/.test(v)) s++;
+    if (/[^A-Za-z0-9]/.test(v)) s++;
+    if (v.length > 0 && s === 0) s = 1;
+    return s;
+  }
+  var LABELS = ['Use 8+ characters with letters, numbers & symbols', 'Weak — add more characters', 'Fair — add numbers or symbols', 'Good — almost there', 'Strong password'];
+
+  function checkConfirm() {
+    if (!confirmEl.value) { confirmHint.textContent = ''; confirmHint.className = 'hint'; confirmEl.classList.remove('invalid'); return true; }
+    var ok = confirmEl.value === pwd.value;
+    confirmHint.textContent = ok ? 'Passwords match' : 'Passwords do not match';
+    confirmHint.className = 'hint ' + (ok ? 'good' : 'bad');
+    confirmEl.classList.toggle('invalid', !ok);
+    return ok;
+  }
+
+  pwd.addEventListener('input', function () {
+    var s = score(pwd.value);
+    meter.className = 'meter' + (s ? ' s' + s : '');
+    strengthText.textContent = LABELS[s];
+    checkConfirm();
+  });
+  confirmEl.addEventListener('input', checkConfirm);
+  document.querySelectorAll('input[name="role"]').forEach(function (r) {
+    r.addEventListener('change', function () { roleHint.textContent = ''; roleHint.className = 'hint'; });
+  });
+  username.addEventListener('input', function () { username.classList.remove('invalid'); });
+
+  form.addEventListener('submit', function (e) {
+    var problems = false;
+    if (!document.querySelector('input[name="role"]:checked')) {
+      roleHint.textContent = 'Please choose Farmer or Buyer.'; roleHint.className = 'hint bad'; problems = true;
+    }
+    if (!username.value.trim()) { username.classList.add('invalid'); problems = true; }
+    if (!pwd.value) { pwd.classList.add('invalid'); problems = true; } else { pwd.classList.remove('invalid'); }
+    if (confirmEl.value !== pwd.value) {
+      confirmHint.textContent = confirmEl.value ? 'Passwords do not match' : 'Please confirm your password';
+      confirmHint.className = 'hint bad'; confirmEl.classList.add('invalid'); problems = true;
+    }
+    if (problems) {
+      e.preventDefault();
+      var first = form.querySelector('.invalid, .hint.bad');
+      if (first && first.scrollIntoView) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    btn.classList.add('loading');
+    document.getElementById('btnLabel').textContent = 'Creating account…';
+    document.getElementById('btnIcon').innerHTML = '<path d="M21 12a9 9 0 11-6.219-8.56"/>';
+  });
+})();
+</script>
 </body>
 </html>

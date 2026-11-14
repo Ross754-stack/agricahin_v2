@@ -2,36 +2,161 @@
 {% block title %}Order #{{ order.id }}{% endblock %}
 {% block page_title %}Order #{{ order.id }}{% endblock %}
 
+{% block head %}
+<style>
+  /* ── Order detail hero ── */
+  .od-hero {
+    position: relative; overflow: hidden; border-radius: var(--r-xl);
+    padding: 26px 28px; margin-bottom: 20px; color: #fff;
+    background: linear-gradient(135deg, #14532d 0%, #166534 52%, #0f766e 100%);
+    box-shadow: 0 18px 40px rgba(20,83,45,.22);
+  }
+  .od-hero::before {
+    content: ''; position: absolute; top: -45%; right: -6%; width: 380px; height: 380px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(74,222,128,.24) 0%, transparent 70%);
+  }
+  .od-hero-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .od-kicker { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #86efac; margin-bottom: 6px; }
+  .od-title { font-size: 26px; font-weight: 800; letter-spacing: -.03em; line-height: 1.15; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .od-sub { font-size: 14px; color: rgba(248,250,252,.78); margin-top: 6px; }
+  .od-pill {
+    display: inline-flex; align-items: center; padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 700;
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.26); color: #fff;
+  }
+  .od-btn-back { background: rgba(255,255,255,.14); color: #fff; border-color: rgba(255,255,255,.28); }
+  .od-btn-back:hover { background: rgba(255,255,255,.24); }
+
+  .od-card { border-radius: 20px; }
+
+  /* ── Connected Progress Stepper ── */
+  .od-stepper { display: flex; flex-direction: column; margin-top: 4px; }
+  .od-step {
+    position: relative; display: flex; align-items: flex-start; gap: 14px;
+    padding-bottom: 18px;
+  }
+  .od-step:last-child { padding-bottom: 0; }
+  .od-step:not(:last-child)::before {
+    content: ''; position: absolute; left: 13px; top: 28px; bottom: 0; width: 2px;
+    background: var(--border);
+  }
+  .od-step.is-done:not(:last-child)::before {
+    background: var(--green-500);
+  }
+  .od-step-dot {
+    position: relative; z-index: 1; width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800; border: 2px solid var(--border);
+    background: var(--surface); color: var(--txt3); transition: all .2s;
+  }
+  .od-step.is-done .od-step-dot {
+    background: var(--green-600); border-color: var(--green-600); color: #fff;
+  }
+  .od-step.is-current .od-step-dot {
+    background: var(--green-50); border-color: var(--green-600); color: var(--green-700);
+    box-shadow: 0 0 0 5px rgba(22,163,74,.14);
+  }
+  .od-step.is-cancelled .od-step-dot {
+    background: var(--red-100); border-color: var(--red-500); color: var(--red-700);
+  }
+  .od-step-body { padding-top: 3px; flex: 1; }
+  .od-step-title { font-size: 13.5px; font-weight: 700; color: var(--txt2); line-height: 1.3; }
+  .od-step.is-done .od-step-title { color: var(--txt); }
+  .od-step.is-current .od-step-title { color: var(--green-800); font-weight: 800; }
+  .od-step-tag {
+    display: inline-block; margin-top: 3px; font-size: 11px; font-weight: 700;
+    color: var(--green-700); background: var(--green-100); padding: 2px 8px; border-radius: 99px;
+  }
+
+  /* ── Interactive Star Rating ── */
+  .od-stars-display { display: inline-flex; align-items: center; gap: 3px; font-size: 20px; line-height: 1; }
+  .od-star-on { color: #f59e0b; }
+  .od-star-off { color: var(--n300); }
+  .od-star-picker { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .od-star-btn {
+    border: none; background: var(--n50); width: 42px; height: 42px; border-radius: 12px;
+    border: 1.5px solid var(--border); font-size: 22px; line-height: 1; cursor: pointer;
+    color: var(--n300); transition: transform .12s, color .12s, border-color .12s, background .12s;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .od-star-btn:hover { transform: translateY(-1px); border-color: #fcd34d; }
+  .od-star-btn.active { color: #f59e0b; background: #fffbeb; border-color: #fcd34d; }
+  .od-star-label { font-size: 13px; font-weight: 700; color: var(--txt2); margin-left: 6px; }
+
+  /* ── Chat Bubbles ── */
+  .od-chat-box {
+    display: flex; flex-direction: column; gap: 12px;
+    max-height: 430px; overflow-y: auto; padding: 6px 4px 6px 0;
+  }
+  .od-msg-row { display: flex; align-items: flex-end; gap: 9px; max-width: 88%; }
+  .od-msg-row.mine { align-self: flex-end; flex-direction: row-reverse; }
+  .od-msg-row.theirs { align-self: flex-start; }
+  .od-bubble {
+    padding: 11px 14px; border-radius: 16px; border: 1px solid var(--border);
+    background: var(--n50); color: var(--txt); box-shadow: var(--shadow-sm); min-width: 140px;
+  }
+  .od-msg-row.mine .od-bubble {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-color: var(--green-200); border-bottom-right-radius: 4px;
+  }
+  .od-msg-row.theirs .od-bubble {
+    background: #fff; border-bottom-left-radius: 4px;
+  }
+  .od-msg-meta {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    font-size: 11px; margin-bottom: 4px;
+  }
+  .od-msg-sender { font-weight: 800; color: var(--txt); }
+  .od-msg-row.mine .od-msg-sender { color: var(--green-800); }
+  .od-msg-time { color: var(--txt3); white-space: nowrap; }
+  .od-msg-text { font-size: 13.5px; line-height: 1.5; word-break: break-word; }
+
+  @media (max-width: 640px) {
+    .od-hero { padding: 20px 18px; border-radius: 20px; }
+    .od-title { font-size: 22px; }
+    .od-msg-row { max-width: 96%; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
 {% set unit = order.product.unit or 'unit' %}
 
-<div class="ph">
-  <div>
-    <div class="ph-title">Order Tracking</div>
-    <div class="ph-sub">{{ order.product.name }} | Cash on Delivery</div>
+<div class="od-hero">
+  <div class="od-hero-inner">
+    <div>
+      <div class="od-kicker">AgriChain Order Tracking</div>
+      <div class="od-title">
+        <span>Order #{{ order.id }}</span>
+        <span class="od-pill">{{ order.status }}</span>
+        <span class="od-pill">{{ delivery.status }}</span>
+      </div>
+      <div class="od-sub">{{ order.product.name }} &middot; {{ order.quantity|qty }} {{ unit }} &middot; &#8369;{{ "%.2f"|format(order.total_price) }} ({{ order.payment_method }})</div>
+    </div>
+    <div>
+      {% if current_user.role == 'admin' %}
+        <a href="{{ url_for('admin') }}#complaints" class="btn od-btn-back btn-sm">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Complaints
+        </a>
+      {% elif current_user.id == order.buyer_id %}
+        <a href="{{ url_for('orders') }}" class="btn od-btn-back btn-sm">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          My Orders
+        </a>
+      {% else %}
+        <a href="{{ url_for('farmer_orders') }}" class="btn od-btn-back btn-sm">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Orders
+        </a>
+      {% endif %}
+    </div>
   </div>
-  {% if current_user.role == 'admin' %}
-    <a href="{{ url_for('admin') }}#complaints" class="btn btn-secondary">
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      Complaints
-    </a>
-  {% elif current_user.id == order.buyer_id %}
-    <a href="{{ url_for('orders') }}" class="btn btn-secondary">
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      My Orders
-    </a>
-  {% else %}
-    <a href="{{ url_for('farmer_orders') }}" class="btn btn-secondary">
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      Orders
-    </a>
-  {% endif %}
 </div>
 
 <div class="grid g-2col">
   <div>
-    <div class="card mb-4">
+    <div class="card od-card mb-4">
       <div class="card-hd"><span class="card-hd-title">Order Summary</span></div>
       <div class="card-body">
         <div class="flex items-center gap-4">
@@ -39,12 +164,12 @@
             <img src="/static/uploads/{{ order.product.image }}" alt="{{ order.product.name }}"
                  style="width:72px;height:72px;border-radius:var(--r-md);object-fit:cover;border:1px solid var(--border)">
           {% else %}
-            <div style="width:72px;height:72px;border-radius:var(--r-md);background:var(--green-50);display:flex;align-items:center;justify-content:center;border:1px solid var(--border)">Item</div>
+            <div style="width:72px;height:72px;border-radius:var(--r-md);background:var(--green-50);display:flex;align-items:center;justify-content:center;font-size:28px;border:1px solid var(--border)">🌾</div>
           {% endif %}
           <div style="flex:1">
-            <div class="font-bold">{{ order.product.name }}</div>
+            <div class="font-bold" style="font-size:16px">{{ order.product.name }}</div>
             <div class="text-muted text-sm mt-1">Seller: {{ order.product.farmer.username }}</div>
-            <div class="mt-2">
+            <div class="mt-2 flex items-center gap-2" style="flex-wrap:wrap">
               <span class="badge b-gray">{{ order.payment_method }}</span>
               {% if order.status == 'Pending' %}
                 <span class="badge b-amber">{{ order.status }}</span>
@@ -71,11 +196,11 @@
         </div>
         <div class="flex justify-between items-center mt-2">
           <span class="text-muted">Total</span>
-          <span class="font-bold text-success">&#8369;{{ "%.2f"|format(order.total_price) }}</span>
+          <span class="font-bold text-success" style="font-size:18px">&#8369;{{ "%.2f"|format(order.total_price) }}</span>
         </div>
 
+        {% if (current_user.id == order.buyer_id and order.status == 'Pending') or delivery.status == 'Delivered' %}
         <div class="divider"></div>
-
         <div class="flex items-center gap-2" style="flex-wrap:wrap">
           {% if current_user.id == order.buyer_id and order.status == 'Pending' %}
             <form method="POST" action="{{ url_for('cancel_order', order_id=order.id) }}" style="margin:0" onsubmit="return confirm('Cancel this order?');">
@@ -86,21 +211,13 @@
             <a href="{{ url_for('order_receipt', order_id=order.id) }}" class="btn btn-primary btn-sm">View Receipt</a>
           {% endif %}
         </div>
+        {% endif %}
       </div>
     </div>
 
-    <div class="card mb-4">
-      <div class="card-hd"><span class="card-hd-title">Delivery Details</span></div>
-      <div class="card-body">
-        <div class="section-lbl">Address</div>
-        <div class="font-bold">{{ delivery.shipping_address }}</div>
-        {% if delivery.contact_number %}
-          <div class="text-muted text-sm mt-1">Contact: {{ delivery.contact_number }}</div>
-        {% endif %}
-
-        <div class="divider"></div>
-
-        <div class="section-lbl">Tracking Status</div>
+    <div class="card od-card mb-4">
+      <div class="card-hd">
+        <span class="card-hd-title">Delivery Progress</span>
         {% if order.status in ['Cancelled', 'Rejected'] %}
           <span class="badge b-red">{{ order.status }}</span>
         {% elif delivery.status == 'Delivered' %}
@@ -112,18 +229,51 @@
         {% else %}
           <span class="badge b-gray">{{ delivery.status }}</span>
         {% endif %}
-        <div class="text-muted text-sm mt-2">{{ delivery.tracking_note }}</div>
+      </div>
+      <div class="card-body">
+        <div class="section-lbl">Address</div>
+        <div class="font-bold">{{ delivery.shipping_address }}</div>
+        {% if delivery.contact_number %}
+          <div class="text-muted text-sm mt-1">Contact: {{ delivery.contact_number }}</div>
+        {% endif %}
+        {% if delivery.tracking_note %}
+          <div class="text-muted text-sm mt-2">{{ delivery.tracking_note }}</div>
+        {% endif %}
 
         <div class="divider"></div>
 
-        <div style="display:grid;gap:10px">
+        <div class="section-lbl">Fulfillment Steps</div>
+        {% set is_closed = order.status in ['Cancelled', 'Rejected'] %}
+        {% set all_done = (not is_closed) and (delivery.status == 'Delivered') %}
+        <div class="od-stepper">
           {% for status in delivery_statuses %}
-            <div class="flex items-center gap-2">
-              {% if loop.index0 <= current_step %}
-                <span class="badge b-green">{{ status }}</span>
-              {% else %}
-                <span class="badge b-gray">{{ status }}</span>
-              {% endif %}
+            {% if is_closed %}
+              {% set step_cls = 'is-cancelled' if loop.index0 == current_step else '' %}
+            {% elif all_done or loop.index0 < current_step %}
+              {% set step_cls = 'is-done' %}
+            {% elif loop.index0 == current_step %}
+              {% set step_cls = 'is-current' %}
+            {% else %}
+              {% set step_cls = '' %}
+            {% endif %}
+            <div class="od-step {{ step_cls }}">
+              <div class="od-step-dot">
+                {% if step_cls == 'is-done' %}
+                  &#10003;
+                {% elif step_cls == 'is-cancelled' %}
+                  &#10005;
+                {% else %}
+                  {{ loop.index }}
+                {% endif %}
+              </div>
+              <div class="od-step-body">
+                <div class="od-step-title">{{ status }}</div>
+                {% if step_cls == 'is-current' %}
+                  <span class="od-step-tag">Current step</span>
+                {% elif step_cls == 'is-cancelled' %}
+                  <span class="badge b-red" style="margin-top:4px">{{ order.status }}</span>
+                {% endif %}
+              </div>
             </div>
           {% endfor %}
         </div>
@@ -131,7 +281,7 @@
     </div>
 
     {% set map_progress = 86 if delivery.status == 'Delivered' else 72 if delivery.status == 'Out for Delivery' else 52 if delivery.status == 'Ready for Pickup/Delivery' else 30 if delivery.status == 'Preparing Order' else 14 %}
-    <div class="card mb-4">
+    <div class="card od-card mb-4">
       <div class="card-hd">
         <span class="card-hd-title">2D Delivery Map</span>
         {% if delivery.status == 'Out for Delivery' %}
@@ -206,32 +356,37 @@
     </div>
 
     {% if order.rating or can_rate_order %}
-    <div class="card mb-4">
+    <div class="card od-card mb-4">
       <div class="card-hd"><span class="card-hd-title">Order Rating</span></div>
       <div class="card-body">
         {% if order.rating %}
-          <div class="font-bold">{{ order.rating.rating }}/5 stars</div>
+          <div class="flex items-center gap-3">
+            <div class="od-stars-display" aria-label="{{ order.rating.rating }} out of 5 stars">
+              {% for i in range(1, 6) %}
+                <span class="{{ 'od-star-on' if i <= order.rating.rating else 'od-star-off' }}">&#9733;</span>
+              {% endfor %}
+            </div>
+            <span class="font-bold text-sm">{{ order.rating.rating }}/5</span>
+          </div>
           {% if order.rating.comment %}
             <div class="text-muted text-sm mt-2">{{ order.rating.comment }}</div>
           {% endif %}
           <div class="text-muted text-xs mt-2">Rated {{ order.rating.created_at.strftime('%b %d, %Y %I:%M %p') }}</div>
         {% elif can_rate_order %}
           <form method="POST" action="{{ url_for('rate_order', order_id=order.id) }}">
-            <div class="form-row cols-2">
-              <div class="form-group">
-                <label class="form-label" for="rating">Rating</label>
-                <select id="rating" name="rating" class="form-control" required>
-                  <option value="5">5 - Excellent</option>
-                  <option value="4">4 - Good</option>
-                  <option value="3">3 - Fair</option>
-                  <option value="2">2 - Poor</option>
-                  <option value="1">1 - Very Poor</option>
-                </select>
+            <input type="hidden" id="rating" name="rating" value="5">
+            <div class="form-group">
+              <label class="form-label">Your Rating</label>
+              <div class="od-star-picker" id="odStarPicker" role="radiogroup" aria-label="Choose rating from 1 to 5 stars">
+                {% for i in range(1, 6) %}
+                  <button type="button" class="od-star-btn active" data-value="{{ i }}" aria-label="{{ i }} star{{ 's' if i != 1 }}">&#9733;</button>
+                {% endfor %}
+                <span class="od-star-label" id="odStarLabel">5 - Excellent</span>
               </div>
-              <div class="form-group">
-                <label class="form-label" for="comment">Comment</label>
-                <input id="comment" name="comment" class="form-control" placeholder="Optional feedback">
-              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="comment">Comment</label>
+              <input id="comment" name="comment" class="form-control" placeholder="Optional feedback about freshness and delivery">
             </div>
             <button type="submit" class="btn btn-primary">Submit Rating</button>
           </form>
@@ -241,7 +396,7 @@
     {% endif %}
 
     {% if current_user.id == order.buyer_id and order.status == 'Pending' and delivery.status == 'Address Confirmation' %}
-    <div class="card mb-4">
+    <div class="card od-card mb-4">
       <div class="card-hd"><span class="card-hd-title">Confirm Address</span></div>
       <div class="card-body">
         <form method="POST">
@@ -256,7 +411,7 @@
     {% endif %}
 
     {% if (current_user.role == 'admin' or current_user.id == order.product.farmer_id) and order.status == 'Approved' %}
-    <div class="card mb-4">
+    <div class="card od-card mb-4">
       <div class="card-hd"><span class="card-hd-title">Seller Tracking Update</span></div>
       <div class="card-body">
         <form method="POST" enctype="multipart/form-data">
@@ -290,7 +445,7 @@
   </div>
 
   <div>
-    <div class="card mb-4">
+    <div class="card od-card mb-4">
       <div class="card-hd"><span class="card-hd-title">Order Timeline</span></div>
       <div class="card-body">
         <div class="timeline-list">
@@ -310,27 +465,36 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-hd"><span class="card-hd-title">Buyer-Seller Messages</span></div>
+    <div class="card od-card">
+      <div class="card-hd">
+        <span class="card-hd-title">Buyer-Seller Messages</span>
+        <span class="badge b-gray">{{ messages|length }}</span>
+      </div>
       <div class="card-body">
-        <div style="display:grid;gap:12px;max-height:420px;overflow:auto;padding-right:4px">
+        <div class="od-chat-box" id="odChatBox">
           {% if messages %}
             {% for msg in messages %}
-              <div style="padding:12px;border:1px solid var(--border);border-radius:var(--r-md);background:{{ 'var(--green-50)' if msg.sender_id == current_user.id else 'var(--surface)' }}">
-                <div class="flex justify-between items-center gap-2">
-                  <span class="font-bold text-sm">{{ msg.sender.username }}</span>
-                  <span class="text-muted text-xs">{{ msg.created_at.strftime('%b %d, %I:%M %p') }}</span>
+              {% set is_mine = msg.sender_id == current_user.id %}
+              <div class="od-msg-row {{ 'mine' if is_mine else 'theirs' }}">
+                <div class="avatar av-sm" style="background:{{ 'var(--green-700)' if is_mine else 'var(--n600)' }}">
+                  {{ msg.sender.username[0].upper() }}
                 </div>
-                <div class="text-sm mt-2">{{ msg.message }}</div>
-                {% if msg.image %}
-                  <a href="/static/uploads/{{ msg.image }}" target="_blank" rel="noopener" class="message-attachment">
-                    <img src="/static/uploads/{{ msg.image }}" alt="Tracking photo for order #{{ order.id }}">
-                  </a>
-                {% endif %}
+                <div class="od-bubble">
+                  <div class="od-msg-meta">
+                    <span class="od-msg-sender">{{ 'You' if is_mine else msg.sender.username }}</span>
+                    <span class="od-msg-time">{{ msg.created_at.strftime('%b %d, %I:%M %p') }}</span>
+                  </div>
+                  <div class="od-msg-text">{{ msg.message }}</div>
+                  {% if msg.image %}
+                    <a href="/static/uploads/{{ msg.image }}" target="_blank" rel="noopener" class="message-attachment">
+                      <img src="/static/uploads/{{ msg.image }}" alt="Tracking photo for order #{{ order.id }}">
+                    </a>
+                  {% endif %}
+                </div>
               </div>
             {% endfor %}
           {% else %}
-            <div class="text-muted text-sm">No messages yet.</div>
+            <div class="text-muted text-sm" style="text-align:center;padding:24px 0">No messages yet. Start a conversation below.</div>
           {% endif %}
         </div>
 
@@ -354,4 +518,47 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var chatBox = document.getElementById('odChatBox');
+  if (chatBox) {
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  var picker = document.getElementById('odStarPicker');
+  var ratingInput = document.getElementById('rating');
+  var starLabel = document.getElementById('odStarLabel');
+  if (!picker || !ratingInput) return;
+
+  var LABELS = {
+    1: '1 - Very Poor',
+    2: '2 - Poor',
+    3: '3 - Fair',
+    4: '4 - Good',
+    5: '5 - Excellent'
+  };
+  var buttons = Array.prototype.slice.call(picker.querySelectorAll('.od-star-btn'));
+
+  function renderStars(val) {
+    buttons.forEach(function (btn) {
+      var n = parseInt(btn.getAttribute('data-value'), 10);
+      btn.classList.toggle('active', n <= val);
+    });
+    if (starLabel) starLabel.textContent = LABELS[val] || '';
+  }
+
+  buttons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var val = parseInt(btn.getAttribute('data-value'), 10);
+      ratingInput.value = String(val);
+      renderStars(val);
+    });
+  });
+
+  renderStars(parseInt(ratingInput.value, 10) || 5);
+})();
+</script>
 {% endblock %}

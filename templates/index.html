@@ -2,53 +2,232 @@
 {% block title %}Marketplace{% endblock %}
 {% block page_title %}Marketplace{% endblock %}
 
+{% block head %}
+<style>
+  /* ── Marketplace hero ── */
+  .mk-hero {
+    position: relative; overflow: hidden; border-radius: var(--r-xl);
+    padding: 28px 28px 26px; margin-bottom: 20px; color: #fff;
+    background: linear-gradient(135deg, #14532d 0%, #166534 50%, #0f766e 100%);
+    box-shadow: 0 18px 40px rgba(20,83,45,.22);
+  }
+  .mk-hero::before {
+    content: ''; position: absolute; top: -40%; right: -8%; width: 380px; height: 380px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(74,222,128,.25) 0%, transparent 70%);
+  }
+  .mk-hero::after {
+    content: '🌾'; position: absolute; right: 28px; bottom: -18px; font-size: 120px; opacity: .12; transform: rotate(-12deg);
+  }
+  .mk-hero-inner { position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .mk-kicker { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #86efac; margin-bottom: 6px; }
+  .mk-title { font-size: 28px; font-weight: 800; letter-spacing: -.03em; line-height: 1.15; }
+  .mk-sub { font-size: 14px; color: rgba(248,250,252,.75); margin-top: 6px; }
+  .mk-count-pill {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22); font-size: 13px; font-weight: 700;
+  }
+  .mk-count-pill b { font-size: 18px; }
+
+  /* ── Toolbar ── */
+  .mk-toolbar {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+    padding: 12px; margin-bottom: 14px; box-shadow: var(--shadow-sm);
+  }
+  .mk-search { position: relative; }
+  .mk-search svg {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px;
+    stroke: var(--txt3); fill: none; stroke-width: 2; stroke-linecap: round; pointer-events: none;
+  }
+  .mk-search input {
+    width: 100%; height: 44px; padding: 0 40px 0 42px; border: 1.5px solid var(--border); border-radius: 12px;
+    font: inherit; font-size: 14px; background: var(--n50); color: var(--txt); outline: none; transition: all .15s;
+  }
+  .mk-search input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px rgba(22,163,74,.12); }
+  .mk-clear {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border: none;
+    border-radius: 50%; background: var(--n200); color: var(--n600); cursor: pointer; font-size: 14px; line-height: 1; display: none;
+  }
+  .mk-clear.on { display: block; }
+  .mk-sort {
+    height: 44px; padding: 0 36px 0 14px; border: 1.5px solid var(--border); border-radius: 12px; font: inherit; font-size: 14px;
+    font-weight: 600; background-color: #fff; color: var(--txt); cursor: pointer; outline: none; -webkit-appearance: none; -moz-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+  }
+  .mk-sort:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(22,163,74,.12); }
+
+  .mk-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .mk-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--surface); color: var(--txt2);
+    font: inherit; font-size: 13px; font-weight: 700; transition: all .15s;
+  }
+  .mk-chip:hover { border-color: var(--green-300); color: var(--green-800); }
+  .mk-chip.active { background: var(--green-600); border-color: var(--green-600); color: #fff; box-shadow: 0 6px 14px rgba(22,163,74,.25); }
+  .mk-chip .n { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: rgba(0,0,0,.07); }
+  .mk-chip.active .n { background: rgba(255,255,255,.25); }
+
+  .mk-result-line { font-size: 13px; color: var(--txt2); margin-bottom: 14px; font-weight: 600; }
+
+  /* ── Cards ── */
+  .mk-card { position: relative; border-radius: 20px; transition: box-shadow .2s, transform .2s, border-color .2s; }
+  .mk-card:hover { border-color: var(--green-300); }
+  .mk-card.is-hidden { display: none; }
+  .mk-media { position: relative; overflow: hidden; background: var(--green-50); }
+  .mk-media .product-img, .mk-media .product-img-placeholder { transition: transform .4s ease; }
+  .mk-media .product-img { display: block; }
+  .mk-card:hover .mk-media .product-img, .mk-card:hover .mk-media .product-img-placeholder { transform: scale(1.06); }
+  .mk-tags { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; flex-wrap: wrap; z-index: 2; }
+  .mk-tag {
+    padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 800; letter-spacing: .02em;
+    background: rgba(255,255,255,.94); color: var(--green-800); box-shadow: 0 2px 8px rgba(15,23,42,.12);
+  }
+  .mk-tag.low { color: var(--amber-700); }
+  .mk-tag.out { color: var(--red-700); }
+  .mk-card.sold-out .mk-media img, .mk-card.sold-out .mk-media .product-img-placeholder { filter: grayscale(.8); opacity: .7; }
+  .mk-loc { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--txt2); font-weight: 600; }
+  .mk-loc svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+  .mk-rating { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: var(--amber-700); }
+  .mk-rating small { color: var(--txt3); font-weight: 600; }
+  .mk-name { font-size: 16px; font-weight: 800; letter-spacing: -.01em; }
+  .mk-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .mk-price-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; margin-top: 6px; }
+  .mk-price { font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: -.02em; line-height: 1; }
+  .mk-price small { font-size: 12px; font-weight: 600; color: var(--txt2); letter-spacing: 0; }
+  .mk-stock { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
+  .mk-stock.ok { background: var(--green-100); color: var(--green-700); }
+  .mk-stock.low { background: var(--amber-100); color: var(--amber-700); }
+  .mk-stock.out { background: var(--red-100); color: var(--red-700); }
+
+  .mk-empty { display: none; text-align: center; padding: 56px 24px; }
+  .mk-empty.on { display: block; }
+
+  @media (max-width: 640px) {
+    .mk-hero { padding: 22px 18px; border-radius: 20px; }
+    .mk-title { font-size: 23px; }
+    .mk-toolbar { grid-template-columns: 1fr; }
+    .mk-sort { width: 100%; }
+    .mk-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; margin-right: -12px; scrollbar-width: none; }
+    .mk-chips::-webkit-scrollbar { display: none; }
+    .mk-chip { flex-shrink: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mk-media .product-img, .mk-media .product-img-placeholder { transition: none; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<div class="ph">
-  <div>
-    <div class="ph-title">Fresh from the Farm 🛒</div>
-    <div class="ph-sub">{{ products|length }} product{{ 's' if products|length != 1 }} available</div>
+{# Pre-compute counts for filter chips #}
+{% set ns = namespace(low=0, organic=0, instock=0) %}
+{% for p in products %}
+  {% set _si = availability[p.id] if availability is defined and p.id in availability else none %}
+  {% set _st = _si.available if _si else (p.quantity or 0) %}
+  {% if _st > 0 %}{% set ns.instock = ns.instock + 1 %}{% endif %}
+  {% if _st > 0 and _st <= 5 %}{% set ns.low = ns.low + 1 %}{% endif %}
+  {% if 'organic' in ((p.description or '')|lower) %}{% set ns.organic = ns.organic + 1 %}{% endif %}
+{% endfor %}
+
+<div class="mk-hero">
+  <div class="mk-hero-inner">
+    <div>
+      <div class="mk-kicker">AgriChain Marketplace</div>
+      <div class="mk-title">Fresh from the Farm 🛒</div>
+      <div class="mk-sub">Hand-picked produce, straight from local farmers to you.</div>
+    </div>
+    <div class="flex items-center gap-3" style="flex-wrap:wrap">
+      <span class="mk-count-pill"><b>{{ products|length }}</b> product{{ 's' if products|length != 1 }} available</span>
+      {% if current_user.role == 'farmer' %}
+        <a href="{{ url_for('add_product') }}" class="btn btn-sm" style="background:#fff;color:var(--green-800);border-color:#fff">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Product
+        </a>
+      {% endif %}
+    </div>
   </div>
-  {% if current_user.role == 'farmer' %}
-    <a href="{{ url_for('add_product') }}" class="btn btn-primary">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Add Product
-    </a>
-  {% endif %}
 </div>
 
 {% if products %}
-<div class="product-grid">
+
+<div class="mk-toolbar">
+  <div class="mk-search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="search" id="mkSearch" placeholder="Search by product, description or location…" autocomplete="off" aria-label="Search products">
+    <button type="button" class="mk-clear" id="mkClear" aria-label="Clear search">&#10005;</button>
+  </div>
+  <select class="mk-sort" id="mkSort" aria-label="Sort products">
+    <option value="default">Sort: Featured</option>
+    <option value="price-asc">Price: Low to High</option>
+    <option value="price-desc">Price: High to Low</option>
+    <option value="rating">Top Rated</option>
+    <option value="stock">Most Stock</option>
+    <option value="name">Name: A–Z</option>
+  </select>
+</div>
+
+<div class="mk-chips" id="mkChips" role="group" aria-label="Filter products">
+  <button type="button" class="mk-chip active" data-filter="all">All <span class="n">{{ products|length }}</span></button>
+  <button type="button" class="mk-chip" data-filter="instock">In Stock <span class="n">{{ ns.instock }}</span></button>
+  <button type="button" class="mk-chip" data-filter="organic">🌿 Organic <span class="n">{{ ns.organic }}</span></button>
+  <button type="button" class="mk-chip" data-filter="low">Low Stock <span class="n">{{ ns.low }}</span></button>
+</div>
+
+<div class="mk-result-line" id="mkResultLine" aria-live="polite"></div>
+
+<div class="product-grid" id="mkGrid">
   {% for p in products %}
   {% set unit = p.unit or 'unit' %}
   {% set stock_info = availability[p.id] if availability is defined and p.id in availability else none %}
   {% set stock = stock_info.available if stock_info else (p.quantity or 0) %}
   {% set rating = rating_summary[p.id] if rating_summary is defined and p.id in rating_summary else none %}
-  <div class="product-card">
-    {% if p.image %}
-      <img class="product-img" src="/static/uploads/{{ p.image }}" alt="{{ p.name }}">
-    {% else %}
-      <div class="product-img-placeholder">🌿</div>
-    {% endif %}
+  {% set is_organic = 'organic' in ((p.description or '')|lower) %}
+  {% set farmer_loc = p.farmer.location if p.farmer and p.farmer.location else '' %}
+  <div class="product-card mk-card {{ 'sold-out' if stock <= 0 }}"
+       data-index="{{ loop.index0 }}"
+       data-name="{{ p.name|lower }}"
+       data-search="{{ (p.name ~ ' ' ~ (p.description or '') ~ ' ' ~ farmer_loc)|lower }}"
+       data-price="{{ p.price or 0 }}"
+       data-stock="{{ stock or 0 }}"
+       data-rating="{{ rating.avg if rating and rating.count else 0 }}"
+       data-organic="{{ 1 if is_organic else 0 }}">
+
+    <div class="mk-media">
+      <div class="mk-tags">
+        {% if is_organic %}<span class="mk-tag">🌿 Organic</span>{% endif %}
+        {% if stock <= 0 %}<span class="mk-tag out">Sold out</span>
+        {% elif stock <= 5 %}<span class="mk-tag low">Almost gone</span>{% endif %}
+      </div>
+      {% if p.image %}
+        <img class="product-img" src="/static/uploads/{{ p.image }}" alt="{{ p.name }}" loading="lazy">
+      {% else %}
+        <div class="product-img-placeholder">🌿</div>
+      {% endif %}
+    </div>
 
     <div class="product-body">
-      <div class="product-name">{{ p.name }}</div>
+      <div class="mk-name">{{ p.name }}</div>
       {% if p.description %}
-        <div class="product-desc">{{ p.description }}</div>
+        <div class="product-desc mk-desc">{{ p.description }}</div>
       {% endif %}
-      <div class="product-meta">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        {{ p.farmer.location }}
+      <div class="flex items-center justify-between gap-2" style="flex-wrap:wrap">
+        <div class="mk-loc">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          {{ farmer_loc or 'Local farm' }}
+        </div>
+        {% if rating and rating.count %}
+          <div class="mk-rating">★ {{ "%.1f"|format(rating.avg) }} <small>({{ rating.count }})</small></div>
+        {% endif %}
       </div>
-      {% if rating and rating.count %}
-        <div class="product-meta">Rating {{ "%.1f"|format(rating.avg) }}/5 from {{ rating.count }} order{{ 's' if rating.count != 1 }}</div>
-      {% endif %}
-      <div class="flex items-center justify-between mt-2">
-        <div class="product-price">&#8369;{{ "%.2f"|format(p.price) }} / {{ unit }}</div>
+      <div class="mk-price-row">
+        <div class="mk-price">&#8369;{{ "%.2f"|format(p.price or 0) }} <small>/ {{ unit }}</small></div>
         {% if stock <= 0 %}
-          <span class="badge b-red">Out</span>
+          <span class="mk-stock out">Out of stock</span>
+        {% elif stock <= 5 %}
+          <span class="mk-stock low">{{ stock|qty }} {{ unit }} left</span>
         {% else %}
-          <span class="badge b-green">Available</span>
+          <span class="mk-stock ok">{{ stock|qty }} {{ unit }} left</span>
         {% endif %}
       </div>
     </div>
@@ -67,6 +246,13 @@
   {% endfor %}
 </div>
 
+<div class="card mk-empty" id="mkEmpty">
+  <div style="font-size:48px;margin-bottom:12px">🔍</div>
+  <div class="font-bold" style="font-size:17px;margin-bottom:6px">No products match your search</div>
+  <div class="text-muted text-sm" style="margin-bottom:16px">Try a different keyword or clear the filters.</div>
+  <button type="button" class="btn btn-secondary btn-sm" id="mkReset">Reset filters</button>
+</div>
+
 {% else %}
 <div class="card">
   <div class="card-body" style="text-align:center;padding:64px 24px">
@@ -77,4 +263,82 @@
 </div>
 {% endif %}
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var grid = document.getElementById('mkGrid');
+  if (!grid) return;
+
+  var cards = Array.prototype.slice.call(grid.querySelectorAll('.mk-card'));
+  var search = document.getElementById('mkSearch');
+  var clearBtn = document.getElementById('mkClear');
+  var sortSel = document.getElementById('mkSort');
+  var chips = Array.prototype.slice.call(document.querySelectorAll('#mkChips .mk-chip'));
+  var resultLine = document.getElementById('mkResultLine');
+  var emptyBox = document.getElementById('mkEmpty');
+  var resetBtn = document.getElementById('mkReset');
+  var filter = 'all';
+
+  function num(el, key) { var v = parseFloat(el.getAttribute('data-' + key)); return isNaN(v) ? 0 : v; }
+
+  function matchesFilter(c) {
+    var stock = num(c, 'stock');
+    if (filter === 'instock') return stock > 0;
+    if (filter === 'organic') return c.getAttribute('data-organic') === '1';
+    if (filter === 'low') return stock > 0 && stock <= 5;
+    return true;
+  }
+
+  function apply() {
+    var q = search.value.trim().toLowerCase();
+    clearBtn.classList.toggle('on', q.length > 0);
+
+    var visible = [];
+    cards.forEach(function (c) {
+      var ok = matchesFilter(c) && (!q || c.getAttribute('data-search').indexOf(q) !== -1);
+      c.classList.toggle('is-hidden', !ok);
+      if (ok) visible.push(c);
+    });
+
+    var mode = sortSel.value;
+    var sorted = cards.slice().sort(function (a, b) {
+      switch (mode) {
+        case 'price-asc':  return num(a, 'price') - num(b, 'price');
+        case 'price-desc': return num(b, 'price') - num(a, 'price');
+        case 'rating':     return num(b, 'rating') - num(a, 'rating');
+        case 'stock':      return num(b, 'stock') - num(a, 'stock');
+        case 'name':       return a.getAttribute('data-name').localeCompare(b.getAttribute('data-name'));
+        default:           return num(a, 'index') - num(b, 'index');
+      }
+    });
+    sorted.forEach(function (c) { grid.appendChild(c); });
+
+    var n = visible.length;
+    var filtered = q || filter !== 'all';
+    resultLine.textContent = filtered ? ('Showing ' + n + ' of ' + cards.length + ' product' + (cards.length !== 1 ? 's' : '')) : '';
+    emptyBox.classList.toggle('on', n === 0);
+    grid.style.display = n === 0 ? 'none' : '';
+  }
+
+  var timer;
+  search.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(apply, 120); });
+  clearBtn.addEventListener('click', function () { search.value = ''; apply(); search.focus(); });
+  sortSel.addEventListener('change', apply);
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      filter = chip.getAttribute('data-filter');
+      apply();
+    });
+  });
+  if (resetBtn) resetBtn.addEventListener('click', function () {
+    search.value = ''; sortSel.value = 'default'; filter = 'all';
+    chips.forEach(function (c) { c.classList.toggle('active', c.getAttribute('data-filter') === 'all'); });
+    apply();
+  });
+})();
+</script>
 {% endblock %}

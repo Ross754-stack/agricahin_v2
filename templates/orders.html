@@ -2,28 +2,207 @@
 {% block title %}My Orders{% endblock %}
 {% block page_title %}My Orders{% endblock %}
 
+{% block head %}
+<style>
+  /* ── Orders hero ── */
+  .ord-hero {
+    position: relative; overflow: hidden; border-radius: var(--r-xl);
+    padding: 28px; margin-bottom: 20px; color: #fff;
+    background: linear-gradient(135deg, #14532d 0%, #166534 52%, #0f766e 100%);
+    box-shadow: 0 18px 40px rgba(20,83,45,.22);
+  }
+  .ord-hero::before {
+    content: ''; position: absolute; top: -42%; right: -6%; width: 380px; height: 380px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(74,222,128,.25) 0%, transparent 70%);
+  }
+  .ord-hero::after {
+    content: '🛒'; position: absolute; right: 28px; bottom: -18px; font-size: 112px; opacity: .10; transform: rotate(-10deg);
+  }
+  .ord-hero-inner { position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .ord-kicker { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #86efac; margin-bottom: 6px; }
+  .ord-title { font-size: 28px; font-weight: 800; letter-spacing: -.03em; line-height: 1.15; }
+  .ord-sub { font-size: 14px; color: rgba(248,250,252,.78); margin-top: 6px; }
+  .ord-count-pill {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22); font-size: 13px; font-weight: 700;
+  }
+  .ord-count-pill b { font-size: 18px; }
+  .ord-btn-light { background: #fff; color: var(--green-800); border-color: #fff; }
+  .ord-btn-light:hover { background: var(--green-50); border-color: var(--green-50); }
+
+  /* ── KPI strip ── */
+  .ord-kpis { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); margin-bottom: 20px; }
+  .ord-kpi {
+    position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; padding: 16px 18px; box-shadow: var(--shadow-sm); transition: transform .18s, box-shadow .18s;
+  }
+  .ord-kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .ord-kpi::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--kpi, var(--green-500)); }
+  .ord-kpi.k-green { --kpi: var(--green-500); }
+  .ord-kpi.k-amber { --kpi: var(--amber-500); }
+  .ord-kpi.k-blue  { --kpi: var(--blue-500); }
+  .ord-kpi.k-slate { --kpi: var(--n500); }
+  .ord-kpi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .ord-kpi-lbl { font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--txt2); }
+  .ord-kpi-ico { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .ord-kpi-ico svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .ord-kpi-val { font-size: 26px; font-weight: 800; letter-spacing: -.04em; line-height: 1.05; }
+
+  /* ── Toolbar & chips ── */
+  .ord-toolbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+    padding: 12px; margin-bottom: 14px; box-shadow: var(--shadow-sm);
+  }
+  .ord-search { position: relative; flex: 1; min-width: 220px; }
+  .ord-search svg {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px;
+    stroke: var(--txt3); fill: none; stroke-width: 2; stroke-linecap: round; pointer-events: none;
+  }
+  .ord-search input {
+    width: 100%; height: 42px; padding: 0 36px 0 40px; border: 1.5px solid var(--border); border-radius: 12px;
+    font: inherit; font-size: 14px; background: var(--n50); color: var(--txt); outline: none; transition: all .15s;
+  }
+  .ord-search input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px rgba(22,163,74,.12); }
+  .ord-clear {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; border: none;
+    border-radius: 50%; background: var(--n200); color: var(--n600); cursor: pointer; font-size: 13px; display: none;
+  }
+  .ord-clear.on { display: block; }
+  .ord-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ord-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 999px; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--surface); color: var(--txt2);
+    font: inherit; font-size: 12.5px; font-weight: 700; transition: all .15s;
+  }
+  .ord-chip:hover { border-color: var(--green-300); color: var(--green-800); }
+  .ord-chip.active { background: var(--green-600); border-color: var(--green-600); color: #fff; box-shadow: 0 6px 14px rgba(22,163,74,.22); }
+  .ord-chip .n { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: rgba(0,0,0,.07); }
+  .ord-chip.active .n { background: rgba(255,255,255,.24); }
+  .ord-result-line { font-size: 13px; color: var(--txt2); margin-bottom: 12px; font-weight: 600; }
+
+  /* ── Table upgrades ── */
+  .ord-card { border-radius: 20px; overflow: hidden; }
+  .ord-id {
+    display: inline-block; padding: 3px 8px; border-radius: 8px; background: var(--n100); border: 1px solid var(--border);
+    font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600; color: var(--n700);
+  }
+  .ord-prod { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .ord-thumb {
+    width: 44px; height: 44px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0;
+  }
+  .ord-thumb-ph {
+    width: 44px; height: 44px; border-radius: 10px; background: var(--green-50); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0;
+  }
+  .ord-row.is-hidden { display: none !important; }
+  .ord-empty { display: none; text-align: center; padding: 48px 24px; }
+  .ord-empty.on { display: block; }
+
+  @media (max-width: 640px) {
+    .ord-hero { padding: 22px 18px; border-radius: 20px; }
+    .ord-title { font-size: 23px; }
+    .ord-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .ord-kpi { padding: 14px; }
+    .ord-kpi-val { font-size: 22px; }
+    .ord-chips { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 2px; scrollbar-width: none; }
+    .ord-chips::-webkit-scrollbar { display: none; }
+    .ord-chip { flex-shrink: 0; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<div class="ph">
-  <div>
-    <div class="ph-title">My Orders 🛒</div>
-    <div class="ph-sub">Track all your purchases</div>
+{% set ns = namespace(pending=0, active=0, delivered=0, cancelled=0) %}
+{% for o in orders %}
+  {% set d_status = o.delivery.status if o.delivery else '' %}
+  {% if o.status in ['Cancelled', 'Rejected'] %}
+    {% set ns.cancelled = ns.cancelled + 1 %}
+  {% elif d_status == 'Delivered' %}
+    {% set ns.delivered = ns.delivered + 1 %}
+  {% elif o.status == 'Pending' %}
+    {% set ns.pending = ns.pending + 1 %}
+  {% else %}
+    {% set ns.active = ns.active + 1 %}
+  {% endif %}
+{% endfor %}
+
+<div class="ord-hero">
+  <div class="ord-hero-inner">
+    <div>
+      <div class="ord-kicker">Buyer Purchase History</div>
+      <div class="ord-title">My Orders 🛒</div>
+      <div class="ord-sub">Track every farm-to-door purchase, delivery step, and receipt.</div>
+    </div>
+    <div class="flex items-center gap-3" style="flex-wrap:wrap">
+      <span class="ord-count-pill"><b>{{ orders|length }}</b> order{{ 's' if orders|length != 1 }}</span>
+      <a href="{{ url_for('marketplace') }}" class="btn ord-btn-light btn-sm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+        Shop More
+      </a>
+    </div>
   </div>
-  <a href="{{ url_for('marketplace') }}" class="btn btn-primary">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-    Shop More
-  </a>
 </div>
 
 {% if orders %}
-<div class="card">
+<div class="ord-kpis">
+  <div class="ord-kpi k-slate">
+    <div class="ord-kpi-top">
+      <span class="ord-kpi-lbl">Total Orders</span>
+      <span class="ord-kpi-ico" style="background:var(--n100);color:var(--n700)"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></span>
+    </div>
+    <div class="ord-kpi-val">{{ orders|length }}</div>
+  </div>
+  <div class="ord-kpi k-amber">
+    <div class="ord-kpi-top">
+      <span class="ord-kpi-lbl">Pending Approval</span>
+      <span class="ord-kpi-ico si-amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+    </div>
+    <div class="ord-kpi-val">{{ ns.pending }}</div>
+  </div>
+  <div class="ord-kpi k-blue">
+    <div class="ord-kpi-top">
+      <span class="ord-kpi-lbl">In Transit / Preparing</span>
+      <span class="ord-kpi-ico si-blue"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+    </div>
+    <div class="ord-kpi-val">{{ ns.active }}</div>
+  </div>
+  <div class="ord-kpi k-green">
+    <div class="ord-kpi-top">
+      <span class="ord-kpi-lbl">Delivered</span>
+      <span class="ord-kpi-ico si-green"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+    </div>
+    <div class="ord-kpi-val">{{ ns.delivered }}</div>
+  </div>
+</div>
+
+<div class="ord-toolbar">
+  <div class="ord-search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="search" id="ordSearch" placeholder="Search by order #ID, product, or status…" autocomplete="off" aria-label="Search orders">
+    <button type="button" class="ord-clear" id="ordClear" aria-label="Clear search">&#10005;</button>
+  </div>
+  <div class="ord-chips" id="ordChips" role="group" aria-label="Filter orders by status">
+    <button type="button" class="ord-chip active" data-filter="all">All <span class="n">{{ orders|length }}</span></button>
+    <button type="button" class="ord-chip" data-filter="pending">Pending <span class="n">{{ ns.pending }}</span></button>
+    <button type="button" class="ord-chip" data-filter="active">Active <span class="n">{{ ns.active }}</span></button>
+    <button type="button" class="ord-chip" data-filter="delivered">Delivered <span class="n">{{ ns.delivered }}</span></button>
+    <button type="button" class="ord-chip" data-filter="cancelled">Cancelled <span class="n">{{ ns.cancelled }}</span></button>
+  </div>
+</div>
+
+<div class="ord-result-line" id="ordResultLine" aria-live="polite"></div>
+
+<div class="card ord-card" id="ordCard">
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
+          <th>Order</th>
           <th>Product</th>
           <th>Qty</th>
-          <th>Price</th>
+          <th>Total</th>
           <th>Payment</th>
           <th>Status</th>
           <th>Tracking</th>
@@ -31,23 +210,35 @@
           <th>Action</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="ordBody">
         {% for o in orders %}
         {% set unit = o.product.unit or 'unit' %}
-        <tr>
+        {% set d_status = o.delivery.status if o.delivery else 'Processing' %}
+        {% if o.status in ['Cancelled', 'Rejected'] %}
+          {% set bucket = 'cancelled' %}
+        {% elif d_status == 'Delivered' %}
+          {% set bucket = 'delivered' %}
+        {% elif o.status == 'Pending' %}
+          {% set bucket = 'pending' %}
+        {% else %}
+          {% set bucket = 'active' %}
+        {% endif %}
+        <tr class="ord-row"
+            data-bucket="{{ bucket }}"
+            data-search="{{ ('#' ~ o.id ~ ' ' ~ o.id ~ ' ' ~ o.product.name ~ ' ' ~ o.status ~ ' ' ~ d_status)|lower }}">
+          <td data-label="Order"><span class="ord-id">#{{ o.id }}</span></td>
           <td data-label="Product">
-            <div class="flex items-center gap-3">
+            <div class="ord-prod">
               {% if o.product.image %}
-                <img src="/static/uploads/{{ o.product.image }}" alt="{{ o.product.name }}"
-                     style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid var(--border)">
+                <img class="ord-thumb" src="/static/uploads/{{ o.product.image }}" alt="{{ o.product.name }}">
               {% else %}
-                <div style="width:36px;height:36px;border-radius:6px;background:var(--green-50);display:flex;align-items:center;justify-content:center;font-size:16px;border:1px solid var(--border)">🌿</div>
+                <div class="ord-thumb-ph">🌿</div>
               {% endif %}
               <span class="font-bold">{{ o.product.name }}</span>
             </div>
           </td>
           <td data-label="Qty">{{ o.quantity|qty }} {{ unit }}</td>
-          <td class="font-bold text-success" data-label="Price">₱{{ "%.2f"|format(o.total_price) }}</td>
+          <td class="font-bold text-success" data-label="Total">₱{{ "%.2f"|format(o.total_price) }}</td>
           <td data-label="Payment">
             <span class="badge b-gray">{{ o.payment_method }}</span>
           </td>
@@ -77,7 +268,7 @@
               <span class="badge b-gray">Processing</span>
             {% endif %}
           </td>
-          <td class="text-muted text-sm" data-label="Date">{{ o.created_at.strftime('%b %d, %Y') }}</td>
+          <td class="text-muted text-sm" data-label="Date">{{ o.created_at.strftime('%b %d, %Y') if o.created_at else '—' }}</td>
           <td data-label="Action">
             <div class="flex items-center gap-2">
               <a href="{{ url_for('order_detail', order_id=o.id) }}" class="btn btn-secondary btn-sm">Track</a>
@@ -95,6 +286,13 @@
       </tbody>
     </table>
   </div>
+
+  <div class="ord-empty" id="ordEmpty">
+    <div style="font-size:44px;margin-bottom:10px">🔍</div>
+    <div class="font-bold" style="font-size:17px;margin-bottom:6px">No orders match this filter</div>
+    <div class="text-muted text-sm" style="margin-bottom:16px">Try another keyword or clear your status filter.</div>
+    <button type="button" class="btn btn-secondary btn-sm" id="ordReset">Reset filters</button>
+  </div>
 </div>
 
 {% else %}
@@ -108,4 +306,60 @@
 </div>
 {% endif %}
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#ordBody .ord-row'));
+  if (!rows.length) return;
+
+  var search = document.getElementById('ordSearch');
+  var clearBtn = document.getElementById('ordClear');
+  var chips = Array.prototype.slice.call(document.querySelectorAll('#ordChips .ord-chip'));
+  var resultLine = document.getElementById('ordResultLine');
+  var emptyBox = document.getElementById('ordEmpty');
+  var resetBtn = document.getElementById('ordReset');
+  var tableWrap = document.querySelector('#ordCard .table-wrap');
+  var activeFilter = 'all';
+
+  function apply() {
+    var q = search.value.trim().toLowerCase();
+    clearBtn.classList.toggle('on', q.length > 0);
+    var shown = 0;
+    rows.forEach(function (r) {
+      var okBucket = activeFilter === 'all' || r.getAttribute('data-bucket') === activeFilter;
+      var okSearch = !q || r.getAttribute('data-search').indexOf(q) !== -1;
+      var show = okBucket && okSearch;
+      r.classList.toggle('is-hidden', !show);
+      if (show) shown++;
+    });
+
+    var filtered = q || activeFilter !== 'all';
+    resultLine.textContent = filtered ? ('Showing ' + shown + ' of ' + rows.length + ' order' + (rows.length !== 1 ? 's' : '')) : '';
+    emptyBox.classList.toggle('on', shown === 0);
+    if (tableWrap) tableWrap.style.display = shown === 0 ? 'none' : '';
+  }
+
+  var timer;
+  search.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(apply, 100); });
+  clearBtn.addEventListener('click', function () { search.value = ''; apply(); search.focus(); });
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      activeFilter = chip.getAttribute('data-filter');
+      apply();
+    });
+  });
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      search.value = '';
+      activeFilter = 'all';
+      chips.forEach(function (c) { c.classList.toggle('active', c.getAttribute('data-filter') === 'all'); });
+      apply();
+    });
+  }
+})();
+</script>
 {% endblock %}

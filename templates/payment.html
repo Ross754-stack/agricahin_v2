@@ -2,154 +2,303 @@
 {% block title %}Place Order{% endblock %}
 {% block page_title %}Place Order{% endblock %}
 
+{% block head %}
+<style>
+  /* ── Checkout hero ── */
+  .pay-hero {
+    position: relative; overflow: hidden; border-radius: var(--r-xl);
+    padding: 26px 28px; margin-bottom: 22px; color: #fff;
+    background: linear-gradient(135deg, #14532d 0%, #166534 52%, #0f766e 100%);
+    box-shadow: 0 18px 40px rgba(20,83,45,.22);
+  }
+  .pay-hero::before {
+    content: ''; position: absolute; top: -45%; right: -6%; width: 360px; height: 360px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(74,222,128,.24) 0%, transparent 70%);
+  }
+  .pay-hero-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .pay-kicker { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #86efac; margin-bottom: 6px; }
+  .pay-title { font-size: 27px; font-weight: 800; letter-spacing: -.03em; line-height: 1.15; }
+  .pay-sub { font-size: 14px; color: rgba(248,250,252,.78); margin-top: 6px; }
+  .pay-btn-back { background: rgba(255,255,255,.14); color: #fff; border-color: rgba(255,255,255,.28); }
+  .pay-btn-back:hover { background: rgba(255,255,255,.24); }
+
+  /* ── 2-column checkout grid ── */
+  .pay-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(300px, .9fr);
+    gap: 22px;
+    align-items: start;
+  }
+  .pay-card { border-radius: 20px; }
+  .pay-summary-sticky { position: sticky; top: calc(var(--topbar-h) + 18px); }
+
+  /* ── Quantity stepper & quick chips ── */
+  .pay-stepper {
+    display: flex; align-items: stretch; gap: 8px;
+  }
+  .pay-step-btn {
+    width: 44px; height: 44px; border-radius: 12px; border: 1.5px solid var(--border);
+    background: var(--n50); color: var(--txt); font-size: 20px; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: all .15s;
+  }
+  .pay-step-btn:hover { border-color: var(--accent); background: var(--green-50); color: var(--green-800); }
+  .pay-step-btn:active { transform: scale(.96); }
+  .pay-stepper .form-control { text-align: center; font-weight: 800; font-size: 16px; height: 44px; }
+
+  .pay-qty-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .pay-qty-chip {
+    padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--n50); color: var(--txt2); font: inherit; font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: all .15s;
+  }
+  .pay-qty-chip:hover { border-color: var(--green-400); background: var(--green-50); color: var(--green-800); }
+
+  /* ── Input with icon ── */
+  .pay-field-wrap { position: relative; }
+  .pay-field-icon {
+    position: absolute; left: 13px; top: 13px; width: 17px; height: 17px;
+    stroke: var(--txt3); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none;
+  }
+  .pay-field-wrap .form-control { padding-left: 40px; }
+
+  /* ── Summary box ── */
+  .pay-total-box {
+    padding: 14px 16px; border-radius: 14px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border: 1px solid var(--green-200);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .pay-protect {
+    margin-top: 14px; padding: 12px 14px; border-radius: 12px;
+    background: var(--n50); border: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: var(--txt2);
+  }
+  .pay-protect svg { width: 17px; height: 17px; color: var(--green-700); stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── Recommended grid ── */
+  .pay-rec-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+  .pay-rec-item {
+    display: flex; flex-direction: column; gap: 12px; padding: 14px;
+    border: 1px solid var(--border); border-radius: 16px; background: #fff;
+    transition: box-shadow .16s, border-color .16s;
+  }
+  .pay-rec-item:hover { box-shadow: var(--shadow-sm); border-color: var(--green-200); }
+
+  @media (max-width: 900px) {
+    .pay-grid { grid-template-columns: 1fr; }
+    .pay-summary-sticky { position: static; order: -1; }
+  }
+  @media (max-width: 640px) {
+    .pay-hero { padding: 20px 18px; border-radius: 20px; }
+    .pay-title { font-size: 22px; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
 {% set unit = product.unit or 'unit' %}
-{% set default_qty = 1 %}
+{% set stock = available_quantity if available_quantity is defined else product.quantity or 0 %}
+{% set default_qty = 1 if stock >= 1 else stock %}
 
-<div class="ph">
-  <div>
-    <div class="ph-title">Complete Your Order</div>
-    <div class="ph-sub">Cash on Delivery with address confirmation</div>
+<div class="pay-hero">
+  <div class="pay-hero-inner">
+    <div>
+      <div class="pay-kicker">Cash on Delivery Checkout</div>
+      <div class="pay-title">Complete Your Order 🛒</div>
+      <div class="pay-sub">Confirm your quantity and delivery details before placing your order.</div>
+    </div>
+    <a href="{{ url_for('marketplace') }}" class="btn pay-btn-back btn-sm">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to Marketplace
+    </a>
   </div>
-  <a href="{{ url_for('marketplace') }}" class="btn btn-secondary">
-    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Back
-  </a>
 </div>
 
-<div style="max-width:560px">
-  <div class="card mb-4">
-    <div class="card-hd"><span class="card-hd-title">Order Summary</span></div>
-    <div class="card-body">
-      <div class="flex items-center gap-4">
-        {% if product.image %}
-          <img src="/static/uploads/{{ product.image }}" alt="{{ product.name }}"
-               style="width:72px;height:72px;border-radius:var(--r-md);object-fit:cover;border:1px solid var(--border)">
-        {% else %}
-          <div style="width:72px;height:72px;border-radius:var(--r-md);background:var(--green-50);display:flex;align-items:center;justify-content:center;font-size:32px;border:1px solid var(--border)">🌿</div>
-        {% endif %}
-        <div style="flex:1">
-          <div class="font-bold" style="font-size:16px">{{ product.name }}</div>
-          <div class="text-muted text-sm mt-1">{{ product.description or 'Farm-fresh product' }}</div>
-          <div class="flex items-center gap-2 mt-2">
-            <span style="font-size:20px;font-weight:800;color:var(--accent)">&#8369;{{ "%.2f"|format(product.price) }} / {{ unit }}</span>
-            <span id="lineQuantity" class="text-muted text-sm">x {{ default_qty|qty }} {{ unit }}</span>
+<div class="pay-grid">
+  <!-- Left column: Form -->
+  <div>
+    <div class="card pay-card mb-4">
+      <div class="card-hd">
+        <span class="card-hd-title">Delivery &amp; Payment Details</span>
+        <span class="badge b-green">Cash on Delivery</span>
+      </div>
+      <div class="card-body">
+        <form id="codOrderForm" method="POST">
+          <div class="form-group">
+            <label class="form-label" for="quantity">Order Quantity ({{ unit }})</label>
+            <div class="pay-stepper">
+              <button type="button" class="pay-step-btn" id="qtyMinus" aria-label="Decrease quantity">&#8722;</button>
+              <input id="quantity" name="quantity" class="form-control" type="number"
+                     min="0.01" max="{{ stock|qty }}" step="0.01" value="{{ default_qty|qty }}" required>
+              <button type="button" class="pay-step-btn" id="qtyPlus" aria-label="Increase quantity">+</button>
+            </div>
+            <div class="pay-qty-chips">
+              {% for preset in [1, 2, 5, 10] %}
+                {% if stock >= preset %}
+                  <button type="button" class="pay-qty-chip" data-qty="{{ preset }}">{{ preset }} {{ unit }}</button>
+                {% endif %}
+              {% endfor %}
+              {% if stock > 0 %}
+                <button type="button" class="pay-qty-chip" data-qty="{{ stock|qty }}">Max ({{ stock|qty }})</button>
+              {% endif %}
+            </div>
+            <div class="form-hint">You can order by {{ unit }} depending on how the seller listed this product.</div>
           </div>
-          <div class="text-muted text-xs mt-1">Available to order</div>
-        </div>
-      </div>
 
-      <div class="divider"></div>
-
-      <div class="form-group">
-        <label class="form-label" for="quantity">Order Quantity ({{ unit }})</label>
-        <input id="quantity" name="quantity" form="codOrderForm" class="form-control" type="number"
-               min="0.01" step="0.01" value="{{ default_qty|qty }}" required>
-        <div class="form-hint">You can order by {{ unit }} depending on how the seller listed this product.</div>
-      </div>
-
-      <div class="flex justify-between items-center">
-        <span class="text-muted">Total to pay</span>
-        <span id="orderTotal" style="font-size:22px;font-weight:800;color:var(--accent)">&#8369;{{ "%.2f"|format((product.price or 0) * default_qty) }}</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="card mb-4">
-    <div class="card-hd"><span class="card-hd-title">Delivery and Payment</span></div>
-    <div class="card-body">
-      <form id="codOrderForm" method="POST">
-        <div class="form-group">
-          <label class="form-label" for="shipping_address">Delivery Address</label>
-          <textarea id="shipping_address" name="shipping_address" class="form-control" required
-                    style="min-height:90px;padding-top:10px;resize:vertical">{{ current_user.location }}</textarea>
-          <div class="form-hint">The seller will confirm this address before preparing your order.</div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="contact_number">Contact Number</label>
-          <input id="contact_number" name="contact_number" class="form-control" placeholder="Optional contact number">
-        </div>
-
-        <div class="form-group" style="margin-bottom:24px">
-          <div class="radio-group">
-            <label class="radio-card">
-              <input type="radio" name="payment" value="COD" checked required>
-              <div>
-                <div class="radio-card-label">Cash on Delivery</div>
-                <div class="radio-card-sub">Pay when your order arrives</div>
-              </div>
-            </label>
+          <div class="form-group">
+            <label class="form-label" for="shipping_address">Delivery Address</label>
+            <div class="pay-field-wrap">
+              <svg class="pay-field-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <textarea id="shipping_address" name="shipping_address" class="form-control" required
+                        style="min-height:90px;padding-top:10px;resize:vertical">{{ current_user.location }}</textarea>
+            </div>
+            <div class="form-hint">The seller will confirm this address before preparing your order.</div>
           </div>
-        </div>
 
-        {# AI Complaint Warning — shown if complaint risk is high #}
-        <div id="ai-complaint-warning" style="display:none;margin-bottom:16px;padding:12px 16px;border-radius:var(--r-md);border-left:4px solid #f59e0b;background:#fffbeb">
-          <div style="display:flex;align-items:flex-start;gap:10px">
-            <span style="font-size:18px;line-height:1">&#x26A0;&#xFE0F;</span>
-            <div>
-              <div class="font-bold text-sm" style="color:#92400e">AI Quality Notice</div>
-              <div class="text-sm" id="ai-complaint-text" style="color:#78350f;margin-top:2px"></div>
+          <div class="form-group">
+            <label class="form-label" for="contact_number">Contact Number</label>
+            <div class="pay-field-wrap">
+              <svg class="pay-field-icon" style="top:50%;transform:translateY(-50%)" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+              <input id="contact_number" name="contact_number" class="form-control" placeholder="Optional contact number (e.g. 0917 123 4567)">
             </div>
           </div>
-        </div>
 
-        <button type="submit" class="btn btn-primary btn-block btn-lg">
-          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          <span id="confirmOrderText">Confirm COD Order - &#8369;{{ "%.2f"|format((product.price or 0) * default_qty) }}</span>
-        </button>
-      </form>
+          <div class="form-group" style="margin-bottom:22px">
+            <label class="form-label">Payment Method</label>
+            <div class="radio-group">
+              <label class="radio-card">
+                <input type="radio" name="payment" value="COD" checked required>
+                <div>
+                  <div class="radio-card-label">Cash on Delivery (COD)</div>
+                  <div class="radio-card-sub">Pay directly when your fresh produce arrives</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {# AI Complaint Warning — shown if complaint risk is high #}
+          <div id="ai-complaint-warning" style="display:none;margin-bottom:16px;padding:12px 16px;border-radius:var(--r-md);border-left:4px solid #f59e0b;background:#fffbeb">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <span style="font-size:18px;line-height:1">&#x26A0;&#xFE0F;</span>
+              <div>
+                <div class="font-bold text-sm" style="color:#92400e">AI Quality Notice</div>
+                <div class="text-sm" id="ai-complaint-text" style="color:#78350f;margin-top:2px"></div>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            <span id="confirmOrderText">Confirm COD Order - &#8369;{{ "%.2f"|format((product.price or 0) * default_qty) }}</span>
+          </button>
+        </form>
+      </div>
     </div>
   </div>
 
-  {% if recommendation_details %}
-  <div class="card">
-    <div class="card-hd">
-      <span class="card-hd-title">Recommended Products</span>
-      <span class="badge b-blue">AI matched</span>
+  <!-- Right column: Sticky Order Summary -->
+  <div class="pay-summary-sticky">
+    <div class="card pay-card">
+      <div class="card-hd">
+        <span class="card-hd-title">Order Summary</span>
+        <span class="badge b-green">{{ stock|qty }} {{ unit }} left</span>
+      </div>
+      <div class="card-body">
+        <div class="flex items-center gap-4">
+          {% if product.image %}
+            <img src="/static/uploads/{{ product.image }}" alt="{{ product.name }}"
+                 style="width:76px;height:76px;border-radius:14px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">
+          {% else %}
+            <div style="width:76px;height:76px;border-radius:14px;background:var(--green-50);display:flex;align-items:center;justify-content:center;font-size:34px;border:1px solid var(--border);flex-shrink:0">🌿</div>
+          {% endif %}
+          <div style="flex:1;min-width:0">
+            <div class="font-bold" style="font-size:16px">{{ product.name }}</div>
+            <div class="text-muted text-sm mt-1">{{ product.description or 'Farm-fresh product' }}</div>
+            {% if product.farmer and product.farmer.location %}
+              <div class="text-muted text-xs mt-1">📍 {{ product.farmer.location }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="flex justify-between items-center text-sm mb-2">
+          <span class="text-muted">Unit Price</span>
+          <span class="font-bold">&#8369;{{ "%.2f"|format(product.price) }} / {{ unit }}</span>
+        </div>
+        <div class="flex justify-between items-center text-sm mb-4">
+          <span class="text-muted">Order Quantity</span>
+          <span id="lineQuantity" class="font-bold">x {{ default_qty|qty }} {{ unit }}</span>
+        </div>
+
+        <div class="pay-total-box">
+          <span class="font-bold text-sm" style="color:var(--green-900)">Total to pay</span>
+          <span id="orderTotal" style="font-size:24px;font-weight:800;color:var(--green-700)">&#8369;{{ "%.2f"|format((product.price or 0) * default_qty) }}</span>
+        </div>
+
+        <div class="pay-protect">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <div>
+            <strong>Buyer Protection:</strong> You only pay upon delivery, and you can track every step or cancel while pending.
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="card-body">
-      <div style="display:grid;gap:16px">
-        {% for recommendation in recommendation_details %}
-          {% set item = recommendation.product %}
-          <div style="display:flex;gap:14px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:var(--r-md)">
+  </div>
+</div>
+
+{% if recommendation_details %}
+<div class="card pay-card mt-6">
+  <div class="card-hd">
+    <span class="card-hd-title">Recommended Products</span>
+    <span class="badge b-blue">AI matched</span>
+  </div>
+  <div class="card-body">
+    <div class="pay-rec-grid">
+      {% for recommendation in recommendation_details %}
+        {% set item = recommendation.product %}
+        <div class="pay-rec-item">
+          <div style="display:flex;gap:12px;align-items:flex-start">
             {% if item.image %}
               <img src="/static/uploads/{{ item.image }}" alt="{{ item.name }}"
-                   style="width:64px;height:64px;border-radius:var(--r-md);object-fit:cover;border:1px solid var(--border)">
+                   style="width:60px;height:60px;border-radius:12px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">
             {% else %}
-              <div style="width:64px;height:64px;border-radius:var(--r-md);background:var(--green-50);display:flex;align-items:center;justify-content:center;font-size:14px;border:1px solid var(--border)">
-                Item
+              <div style="width:60px;height:60px;border-radius:12px;background:var(--green-50);display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--border);flex-shrink:0">
+                🌾
               </div>
             {% endif %}
 
-            <div style="flex:1">
-              <div style="font-weight:700;font-size:15px">{{ item.name }}</div>
-              <div class="text-muted text-sm mt-1">
+            <div style="flex:1;min-width:0">
+              <div class="flex items-center justify-between gap-2" style="flex-wrap:wrap">
+                <div style="font-weight:800;font-size:15px">{{ item.name }}</div>
+                <span class="badge b-blue">{{ recommendation.match_percent }}% match</span>
+              </div>
+              <div class="text-muted text-xs mt-1">
                 {{ item.description or 'Fresh agricultural product available.' }}
               </div>
-              <div class="mt-2" style="font-weight:800;color:var(--accent)">
-                &#8369;{{ "%.2f"|format(item.price) }} / {{ item.unit or 'unit' }}
-              </div>
-              <div class="text-muted text-xs mt-1">Available to order</div>
-              <div class="recommendation-reason mt-2">
-                <div class="font-bold">{{ recommendation.match_percent }}% match</div>
-                <div>{{ recommendation.reason }}</div>
-                <div class="text-muted mt-1">{{ recommendation.buyer_tip }}</div>
-              </div>
-              <div class="mt-2">
-                <a href="{{ url_for('order', product_id=item.id) }}" class="btn btn-secondary">
-                  View Product
-                </a>
+              <div class="mt-2 flex items-center justify-between gap-2">
+                <span style="font-weight:800;color:var(--accent)">&#8369;{{ "%.2f"|format(item.price) }} / {{ item.unit or 'unit' }}</span>
+                <span class="text-muted text-xs">{{ (item.quantity or 0)|qty }} {{ item.unit or 'unit' }} left</span>
               </div>
             </div>
           </div>
-        {% endfor %}
-      </div>
+
+          <div class="recommendation-reason">
+            <div>{{ recommendation.reason }}</div>
+            <div class="text-muted mt-1">{{ recommendation.buyer_tip }}</div>
+          </div>
+
+          <a href="{{ url_for('order', product_id=item.id) }}" class="btn btn-secondary btn-sm btn-block" style="margin-top:auto">
+            View Product
+          </a>
+        </div>
+      {% endfor %}
     </div>
   </div>
-  {% endif %}
 </div>
+{% endif %}
 
 {% endblock %}
 
@@ -160,6 +309,7 @@ const orderTotal = document.getElementById('orderTotal');
 const confirmOrderText = document.getElementById('confirmOrderText');
 const lineQuantity = document.getElementById('lineQuantity');
 const unitPrice = Number('{{ product.price or 0 }}');
+const availableStock = Number('{{ available_quantity if available_quantity is defined else (product.quantity or 0) }}');
 const sellingUnit = {{ (product.unit or 'unit')|tojson }};
 
 function formatOrderQuantity(value) {
@@ -170,7 +320,7 @@ function formatOrderQuantity(value) {
 function updateOrderTotal() {
   if (!orderQuantityInput) return;
   const rawQuantity = Number(orderQuantityInput.value || 0);
-  const quantity = Math.max(0, rawQuantity);
+  const quantity = Math.max(0, Math.min(rawQuantity, availableStock));
   const total = unitPrice * quantity;
   const amount = total.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
 
@@ -183,6 +333,37 @@ if (orderQuantityInput) {
   orderQuantityInput.addEventListener('input', updateOrderTotal);
   updateOrderTotal();
 }
+
+const qtyMinus = document.getElementById('qtyMinus');
+const qtyPlus = document.getElementById('qtyPlus');
+
+function setQuantity(nextVal) {
+  if (!orderQuantityInput) return;
+  const minVal = availableStock >= 1 ? 1 : 0.01;
+  const clamped = Math.max(minVal, Math.min(availableStock, nextVal));
+  orderQuantityInput.value = formatOrderQuantity(Number(clamped.toFixed(2)));
+  orderQuantityInput.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+if (qtyMinus) {
+  qtyMinus.addEventListener('click', () => {
+    const cur = parseFloat(orderQuantityInput.value || 1);
+    const step = cur > 1 ? 1 : 0.5;
+    setQuantity(cur - step);
+  });
+}
+if (qtyPlus) {
+  qtyPlus.addEventListener('click', () => {
+    const cur = parseFloat(orderQuantityInput.value || 0);
+    setQuantity(cur + 1);
+  });
+}
+document.querySelectorAll('.pay-qty-chip').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    const val = parseFloat(chip.getAttribute('data-qty'));
+    if (!isNaN(val)) setQuantity(val);
+  });
+});
 
 /* ── AI Complaint Risk Check ─────────────────────────────────────────── */
 const aiComplaintWarning = document.getElementById('ai-complaint-warning');

@@ -4,66 +4,75 @@
 
 {% block content %}
 
-<div class="ph">
-  <div>
-    <div class="ph-title">Analytics</div>
-    <div class="ph-sub">Visual sales, stock, and market-position graphs for your products</div>
+<div class="pg-hero" data-emoji="📊">
+  <div class="pg-hero-inner">
+    <div>
+      <div class="pg-kicker">Performance &amp; Trends</div>
+      <div class="pg-title">Analytics</div>
+      <div class="pg-sub">Visual sales, stock, and market-position graphs across all your listed products.</div>
+    </div>
+    <div class="pg-actions">
+      <a href="{{ url_for('market_insights') }}" class="btn pg-btn-light btn-sm">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 4 4 5-7"/></svg>
+        Market Insights
+      </a>
+      <a href="{{ url_for('dashboard') }}" class="btn pg-btn-ghost btn-sm">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Dashboard
+      </a>
+    </div>
   </div>
-  <a href="{{ url_for('market_insights') }}" class="btn btn-secondary">
-    <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 4 4 5-7"/></svg>
-    Market Insights
-  </a>
 </div>
 
-<div class="grid g4 mb-6">
-  <div class="stat">
-    <div class="stat-icon si-green">
-      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+<div class="kpi-grid">
+  <div class="kpi k-green">
+    <div class="kpi-top">
+      <span class="kpi-lbl">Sales</span>
+      <span class="kpi-ico si-green">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      </span>
     </div>
-    <div>
-      <div class="stat-lbl">Sales</div>
-      <div class="stat-val">&#8369;{{ "%.2f"|format(total_sales) }}</div>
-    </div>
-    <div class="stat-note text-success">Approved orders only</div>
+    <div class="kpi-val">&#8369;{{ "%.2f"|format(total_sales) }}</div>
+    <div class="kpi-note good">Approved orders only</div>
   </div>
 
-  <div class="stat">
-    <div class="stat-icon si-blue">
-      <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+  <div class="kpi k-blue">
+    <div class="kpi-top">
+      <span class="kpi-lbl">Orders</span>
+      <span class="kpi-ico si-blue">
+        <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+      </span>
     </div>
-    <div>
-      <div class="stat-lbl">Orders</div>
-      <div class="stat-val">{{ total_orders }}</div>
-    </div>
-    <div class="stat-note text-muted">All seller orders</div>
+    <div class="kpi-val">{{ total_orders }}</div>
+    <div class="kpi-note">All seller orders</div>
   </div>
 
-  <div class="stat">
-    <div class="stat-icon si-amber">
-      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 4 4 5-7"/></svg>
+  <div class="kpi k-amber">
+    <div class="kpi-top">
+      <span class="kpi-lbl">Units Sold</span>
+      <span class="kpi-ico si-amber">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 4 4 5-7"/></svg>
+      </span>
     </div>
-    <div>
-      <div class="stat-lbl">Units Sold</div>
-      <div class="stat-val">{{ total_units_sold|qty }}</div>
-    </div>
-    <div class="stat-note text-muted">Across listed products</div>
+    <div class="kpi-val">{{ total_units_sold|qty }}</div>
+    <div class="kpi-note">Across listed products</div>
   </div>
 
-  <div class="stat">
-    <div class="stat-icon si-red">
-      <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+  <div class="kpi k-red">
+    <div class="kpi-top">
+      <span class="kpi-lbl">Avg Order</span>
+      <span class="kpi-ico si-red">
+        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+      </span>
     </div>
-    <div>
-      <div class="stat-lbl">Avg Order</div>
-      <div class="stat-val">&#8369;{{ "%.2f"|format(average_order_value) }}</div>
-    </div>
-    <div class="stat-note text-muted">{{ total_stock|qty }} units currently listed</div>
+    <div class="kpi-val">&#8369;{{ "%.2f"|format(average_order_value) }}</div>
+    <div class="kpi-note">{{ total_stock|qty }} units currently listed</div>
   </div>
 </div>
 
 {% if chart_rows %}
 <div class="analytics-chart-grid mb-6">
-  <div class="card analytics-card">
+  <div class="card card-r20 analytics-card">
     <div class="card-hd">
       <span class="card-hd-title">Revenue by Product</span>
       <span class="badge b-green">Sales graph</span>
@@ -86,7 +95,7 @@
     </div>
   </div>
 
-  <div class="card analytics-card">
+  <div class="card card-r20 analytics-card">
     <div class="card-hd">
       <span class="card-hd-title">Order Status</span>
       <span class="badge b-blue">Flow</span>
@@ -110,7 +119,7 @@
 </div>
 
 <div class="analytics-chart-grid mb-6">
-  <div class="card analytics-card">
+  <div class="card card-r20 analytics-card">
     <div class="card-hd">
       <span class="card-hd-title">Sold vs Available Stock</span>
       <span class="badge b-amber">Inventory</span>
@@ -144,7 +153,7 @@
     </div>
   </div>
 
-  <div class="card analytics-card">
+  <div class="card card-r20 analytics-card">
     <div class="card-hd">
       <span class="card-hd-title">Demand Mix</span>
       <span class="badge b-gray">Signals</span>
@@ -167,7 +176,7 @@
   </div>
 </div>
 
-<div class="card analytics-card mb-6">
+<div class="card card-r20 analytics-card mb-6">
   <div class="card-hd">
     <span class="card-hd-title">Six-Month Revenue Trend</span>
     <span class="badge b-green">Monthly</span>
@@ -185,7 +194,7 @@
   </div>
 </div>
 
-<div class="card analytics-card">
+<div class="card card-r20 analytics-card">
   <div class="card-hd">
     <span class="card-hd-title">Market Price Position</span>
     <span class="badge b-blue">Compared with Market Insights</span>
@@ -220,9 +229,10 @@
   </div>
 </div>
 {% else %}
-<div class="card">
-  <div class="card-body" style="text-align:center;padding:48px 24px">
-    <div class="font-bold" style="margin-bottom:6px">No analytics yet</div>
+<div class="card card-r20">
+  <div class="card-body" style="text-align:center;padding:56px 24px">
+    <div style="font-size:44px;margin-bottom:10px">📊</div>
+    <div class="font-bold" style="font-size:17px;margin-bottom:6px">No analytics yet</div>
     <div class="text-muted text-sm">Add products and approve orders to generate seller graphs.</div>
     <div class="mt-3">
       <a href="{{ url_for('add_product') }}" class="btn btn-primary">Add Product</a>

@@ -1755,6 +1755,10 @@ def add_product():
         price = parse_positive_float(request.form.get('price'))
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
+        is_organic = request.form.get('is_organic') == '1'
+
+        if is_organic and 'organic' not in f"{name} {description}".lower():
+            description = f"Organic · {description}" if description else "Organic product"
 
         if not name:
             flash("Product name is required.", "error")
@@ -1815,6 +1819,15 @@ def edit_product(product_id):
         price = parse_positive_float(request.form.get('price'))
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
+        is_organic = request.form.get('is_organic') == '1'
+
+        if is_organic and 'organic' not in f"{name} {description}".lower():
+            description = f"Organic · {description}" if description else "Organic product"
+        elif not is_organic:
+            if description == 'Organic product':
+                description = ''
+            elif description.startswith('Organic · '):
+                description = description[len('Organic · '):].strip()
 
         if not name:
             flash("Product name is required.", "error")

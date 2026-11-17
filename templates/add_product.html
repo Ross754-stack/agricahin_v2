@@ -107,7 +107,7 @@
             <div class="form-group">
               <label class="form-label">Product Type</label>
               <label class="ap-organic">
-                <input type="checkbox" id="is_organic" name="is_organic" value="1" {{ 'checked' if product and product.description and 'organic' in product.description.lower() else '' }}>
+                <input type="checkbox" id="is_organic" name="is_organic" value="1" {{ 'checked' if product and 'organic' in ((product.name ~ ' ' ~ (product.description or ''))|lower) else '' }}>
                 <span>
                   <span class="font-bold text-sm">🌿 Organic Product</span>
                   <span class="text-muted text-xs" style="display:block">Check if this product is organically grown — improves AI price accuracy</span>
@@ -389,6 +389,13 @@ dz.addEventListener('drop', e => {
 
 /* ── Submit loading state ────────────────────────────────────────────────── */
 document.getElementById('productForm').addEventListener('submit', function () {
+  const isOrg = document.getElementById('is_organic').checked;
+  const nameVal = document.getElementById('name').value.trim();
+  const descEl = document.getElementById('description');
+  const descVal = descEl.value.trim();
+  if (isOrg && !(nameVal + ' ' + descVal).toLowerCase().includes('organic')) {
+    descEl.value = descVal ? ('Organic · ' + descVal) : 'Organic product';
+  }
   const btn = document.getElementById('submitBtn');
   btn.style.pointerEvents = 'none';
   btn.style.opacity = '.85';

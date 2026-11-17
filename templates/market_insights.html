@@ -4,136 +4,273 @@
 
 {% block content %}
 
-<div class="ph">
-  <div>
-    <div class="ph-title">Market Insights</div>
-    <div class="ph-sub">Peer price comparison for your listed products</div>
-  </div>
-  {% if current_user.role == 'farmer' %}
-    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      Dashboard
-    </a>
+{% set ns = namespace(high=0, active=0, low=0) %}
+{% for row in market_rows %}
+  {% if row.demand_trend == 'High Demand' %}
+    {% set ns.high = ns.high + 1 %}
+  {% elif row.demand_trend == 'Active Demand' %}
+    {% set ns.active = ns.active + 1 %}
+  {% else %}
+    {% set ns.low = ns.low + 1 %}
   {% endif %}
-</div>
+{% endfor %}
 
-<div class="grid g4 mb-6">
-  <div class="stat">
-    <div class="stat-icon si-green">
-      <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M7 8h10"/><path d="M7 12h10"/><path d="M7 16h6"/></svg>
-    </div>
+<div class="pg-hero" data-emoji="📈">
+  <div class="pg-hero-inner">
     <div>
-      <div class="stat-lbl">Your Product Types</div>
-      <div class="stat-val">{{ market_summary.product_types }}</div>
+      <div class="pg-kicker">AgriChain Price &amp; Demand</div>
+      <div class="pg-title">Market Insights</div>
+      <div class="pg-sub">Current prices, demand trends, stock movement, and sales signals across active farm listings.</div>
     </div>
-    <div class="stat-note text-muted">Grouped by product name and unit</div>
-  </div>
-
-  <div class="stat">
-    <div class="stat-icon si-blue">
-      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 4 4 5-7"/></svg>
+    <div class="pg-actions">
+      <span class="pg-pill">{{ market_rows|length }} product group{{ 's' if market_rows|length != 1 }}</span>
+      {% if current_user.role == 'farmer' %}
+        <a href="{{ url_for('analytics') }}" class="btn pg-btn-light btn-sm">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Analytics
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="btn pg-btn-ghost btn-sm">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Dashboard
+        </a>
+      {% endif %}
     </div>
-    <div>
-      <div class="stat-lbl">Matched Products</div>
-      <div class="stat-val">{{ market_summary.comparable_groups }}</div>
-    </div>
-    <div class="stat-note text-muted">With peer prices available</div>
-  </div>
-
-  <div class="stat">
-    <div class="stat-icon si-amber">
-      <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
-    </div>
-    <div>
-      <div class="stat-lbl">Peer Listings</div>
-      <div class="stat-val">{{ market_summary.peer_listing_count }}</div>
-    </div>
-    <div class="stat-note text-muted">Same product and unit only</div>
-  </div>
-
-  <div class="stat">
-    <div class="stat-icon si-red">
-      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-    </div>
-    <div>
-      <div class="stat-lbl">Avg Peer Price</div>
-      <div class="stat-val">&#8369;{{ "%.2f"|format(market_summary.average_market_price) }}</div>
-    </div>
-    <div class="stat-note text-muted">Across matched peer groups</div>
   </div>
 </div>
 
-<div class="card">
+<div class="kpi-grid">
+  <div class="kpi k-green">
+    <div class="kpi-top">
+      <span class="kpi-lbl">Product Types</span>
+      <span class="kpi-ico si-green">
+        <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M7 8h10"/><path d="M7 12h10"/><path d="M7 16h6"/></svg>
+      </span>
+    </div>
+    <div class="kpi-val">{{ market_summary.product_types }}</div>
+    <div class="kpi-note">Grouped by name &amp; unit</div>
+  </div>
+
+  <div class="kpi k-blue">
+    <div class="kpi-top">
+      <span class="kpi-lbl">Available Stock</span>
+      <span class="kpi-ico si-blue">
+        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.3 7L12 12l8.7-5"/></svg>
+      </span>
+    </div>
+    <div class="kpi-val">{{ market_summary.total_stock|qty }}</div>
+    <div class="kpi-note">Total listed quantity</div>
+  </div>
+
+  <div class="kpi k-amber">
+    <div class="kpi-top">
+      <span class="kpi-lbl">Quantity Sold</span>
+      <span class="kpi-ico si-amber">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 4 4 5-7"/></svg>
+      </span>
+    </div>
+    <div class="kpi-val">{{ market_summary.total_units_sold|qty }}</div>
+    <div class="kpi-note">Based on transaction records</div>
+  </div>
+
+  <div class="kpi k-red">
+    <div class="kpi-top">
+      <span class="kpi-lbl">Avg Price</span>
+      <span class="kpi-ico si-red">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      </span>
+    </div>
+    <div class="kpi-val">&#8369;{{ "%.2f"|format(market_summary.average_market_price) }}</div>
+    <div class="kpi-note">Average across product groups</div>
+  </div>
+</div>
+
+{% if market_rows %}
+<div class="f-toolbar">
+  <div class="f-search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="search" id="miSearch" placeholder="Search product, demand trend, or action…" autocomplete="off" aria-label="Search market insights">
+  </div>
+  <select class="f-select" id="miSort" aria-label="Sort market rows">
+    <option value="default">Sort: Featured</option>
+    <option value="price-asc">Avg Price: Low–High</option>
+    <option value="price-desc">Avg Price: High–Low</option>
+    <option value="orders">Most Orders</option>
+    <option value="revenue">Highest Revenue</option>
+    <option value="stock">Highest Stock</option>
+  </select>
+  <div class="f-chips" id="miChips" role="group" aria-label="Filter by demand trend">
+    <button type="button" class="f-chip active" data-filter="all">All <span class="n">{{ market_rows|length }}</span></button>
+    <button type="button" class="f-chip" data-filter="High Demand">High Demand <span class="n">{{ ns.high }}</span></button>
+    <button type="button" class="f-chip" data-filter="Active Demand">Active Demand <span class="n">{{ ns.active }}</span></button>
+    <button type="button" class="f-chip" data-filter="Low Demand">Low Demand <span class="n">{{ ns.low }}</span></button>
+  </div>
+</div>
+
+<div class="f-result" id="miResult" aria-live="polite"></div>
+
+<div class="card card-r20" id="miCard">
   <div class="card-hd">
-    <span class="card-hd-title">Price Comparison</span>
+    <span class="card-hd-title">Current Market Information</span>
+    <span class="badge b-gray" id="miCountBadge">{{ market_rows|length }} groups</span>
   </div>
 
-  {% if market_rows %}
-  <div class="table-wrap">
+  <div class="table-wrap" id="miTableWrap">
     <table>
       <thead>
         <tr>
           <th>Product</th>
-          <th>Your Price</th>
-          <th>Peer Avg</th>
-          <th>Peer Price Range</th>
-          <th>Peer Listings</th>
-          <th>Position</th>
+          <th>Current Price</th>
+          <th>Price Range</th>
+          <th>Stock</th>
+          <th>Orders</th>
+          <th>Demand Trend</th>
+          <th>Market Action</th>
+          <th>Revenue</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="miBody">
         {% for row in market_rows %}
-        <tr>
+        <tr class="mi-row"
+            data-index="{{ loop.index0 }}"
+            data-demand="{{ row.demand_trend }}"
+            data-price="{{ row.avg_price or 0 }}"
+            data-orders="{{ row.order_count or 0 }}"
+            data-revenue="{{ row.approved_revenue or 0 }}"
+            data-stock="{{ row.total_stock or 0 }}"
+            data-search="{{ (row.name ~ ' ' ~ row.unit ~ ' ' ~ row.demand_trend ~ ' ' ~ row.market_action)|lower }}">
           <td data-label="Product">
             <div class="font-bold">{{ row.name }}</div>
-            <div class="text-muted text-xs">Sold by {{ row.unit }}</div>
+            <div class="text-muted text-xs">{{ row.listing_count }} listing{{ 's' if row.listing_count != 1 }} from {{ row.farmer_count }} farmer{{ 's' if row.farmer_count != 1 }}</div>
           </td>
-          <td data-label="Your Price">
-            <span class="font-bold text-success">&#8369;{{ "%.2f"|format(row.own_avg_price) }} / {{ row.unit }}</span>
-            {% if row.own_min_price != row.own_max_price %}
-              <div class="text-muted text-xs">&#8369;{{ "%.2f"|format(row.own_min_price) }} - &#8369;{{ "%.2f"|format(row.own_max_price) }}</div>
-            {% endif %}
+          <td data-label="Avg Price"><span class="font-bold text-success">&#8369;{{ "%.2f"|format(row.avg_price) }} / {{ row.unit }}</span></td>
+          <td class="text-muted text-sm" data-label="Price Range">&#8369;{{ "%.2f"|format(row.min_price) }} - &#8369;{{ "%.2f"|format(row.max_price) }} / {{ row.unit }}</td>
+          <td data-label="Stock">{{ row.total_stock|qty }} <span class="text-muted text-xs">{{ row.unit }}</span></td>
+          <td data-label="Orders">
+            <div class="font-bold">{{ row.order_count }}</div>
+            <div class="text-muted text-xs">{{ row.units_sold|qty }} {{ row.unit }} sold</div>
           </td>
-          <td data-label="Peer Avg">
-            {% if row.market_avg_price %}
-              <span class="font-bold">&#8369;{{ "%.2f"|format(row.market_avg_price) }} / {{ row.unit }}</span>
-              <div class="text-muted text-xs">{{ "%+.1f"|format(row.price_difference) }}% vs peers</div>
+          <td data-label="Demand">
+            {% if row.demand_trend == 'High Demand' %}
+              <span class="badge b-green">{{ row.demand_trend }}</span>
+            {% elif row.demand_trend == 'Active Demand' %}
+              <span class="badge b-blue">{{ row.demand_trend }}</span>
             {% else %}
-              <span class="text-muted">No peer price yet</span>
+              <span class="badge b-gray">{{ row.demand_trend }}</span>
             {% endif %}
           </td>
-          <td data-label="Peer Range" class="text-muted text-sm">
-            {% if row.has_comparison %}
-              &#8369;{{ "%.2f"|format(row.min_price) }} - &#8369;{{ "%.2f"|format(row.max_price) }} / {{ row.unit }}
+          <td data-label="Action">
+            {% if row.market_action == 'Increase supply' %}
+              <span class="badge b-red">{{ row.market_action }}</span>
+            {% elif row.market_action in ['Promote product', 'Monitor pricing'] %}
+              <span class="badge b-amber">{{ row.market_action }}</span>
+            {% elif row.market_action == 'Maintain supply' %}
+              <span class="badge b-green">{{ row.market_action }}</span>
             {% else %}
-              -
+              <span class="badge b-gray">{{ row.market_action }}</span>
             {% endif %}
           </td>
-          <td data-label="Peer Listings">
-            {% if row.has_comparison %}
-              <div class="font-bold">{{ row.listing_count }}</div>
-              <div class="text-muted text-xs">from {{ row.farmer_count }} farmer{{ 's' if row.farmer_count != 1 }}</div>
-            {% else %}
-              <span class="text-muted">None</span>
-            {% endif %}
-          </td>
-          <td data-label="Position">
-            <span class="badge b-{{ row.price_tone }}">{{ row.price_position }}</span>
-          </td>
+          <td data-label="Revenue"><span class="font-bold">&#8369;{{ "%.2f"|format(row.approved_revenue) }}</span></td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  {% else %}
-  <div class="card-body" style="text-align:center;padding:48px 24px">
-    <div class="font-bold" style="margin-bottom:6px">No product prices yet</div>
-    <div class="text-muted text-sm">Add products to compare prices with matching peer listings.</div>
-    <div class="mt-3">
-      <a href="{{ url_for('add_product') }}" class="btn btn-primary">Add Product</a>
-    </div>
-  </div>
-  {% endif %}
-</div>
 
+  <div class="f-empty" id="miEmpty">
+    <div style="font-size:40px;margin-bottom:8px">🔍</div>
+    <div class="font-bold" style="font-size:16px;margin-bottom:4px">No market groups match your filter</div>
+    <div class="text-muted text-sm" style="margin-bottom:14px">Try another search term or clear the demand filter.</div>
+    <button type="button" class="btn btn-secondary btn-sm" id="miReset">Reset filters</button>
+  </div>
+</div>
+{% else %}
+<div class="card card-r20">
+  <div class="card-body" style="text-align:center;padding:56px 24px">
+    <div style="font-size:44px;margin-bottom:10px">📈</div>
+    <div class="font-bold" style="font-size:17px;margin-bottom:6px">No market data yet</div>
+    <div class="text-muted text-sm">Add products and transactions to generate price and demand insights.</div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var body = document.getElementById('miBody');
+  if (!body) return;
+
+  var rows = Array.prototype.slice.call(body.querySelectorAll('.mi-row'));
+  var search = document.getElementById('miSearch');
+  var sortSel = document.getElementById('miSort');
+  var chips = Array.prototype.slice.call(document.querySelectorAll('#miChips .f-chip'));
+  var resultLine = document.getElementById('miResult');
+  var countBadge = document.getElementById('miCountBadge');
+  var tableWrap = document.getElementById('miTableWrap');
+  var emptyBox = document.getElementById('miEmpty');
+  var resetBtn = document.getElementById('miReset');
+  var activeDemand = 'all';
+
+  function num(el, key) {
+    var v = parseFloat(el.getAttribute('data-' + key));
+    return isNaN(v) ? 0 : v;
+  }
+
+  function apply() {
+    var q = search.value.trim().toLowerCase();
+    var mode = sortSel.value;
+
+    var sorted = rows.slice().sort(function (a, b) {
+      switch (mode) {
+        case 'price-asc':  return num(a, 'price') - num(b, 'price');
+        case 'price-desc': return num(b, 'price') - num(a, 'price');
+        case 'orders':     return num(b, 'orders') - num(a, 'orders');
+        case 'revenue':    return num(b, 'revenue') - num(a, 'revenue');
+        case 'stock':      return num(b, 'stock') - num(a, 'stock');
+        default:           return num(a, 'index') - num(b, 'index');
+      }
+    });
+    sorted.forEach(function (r) { body.appendChild(r); });
+
+    var shown = 0;
+    rows.forEach(function (r) {
+      var okDemand = activeDemand === 'all' || r.getAttribute('data-demand') === activeDemand;
+      var okSearch = !q || r.getAttribute('data-search').indexOf(q) !== -1;
+      var show = okDemand && okSearch;
+      r.classList.toggle('f-hidden', !show);
+      if (show) shown++;
+    });
+
+    var filtered = Boolean(q || activeDemand !== 'all');
+    resultLine.textContent = filtered
+      ? ('Showing ' + shown + ' of ' + rows.length + ' product group' + (rows.length !== 1 ? 's' : ''))
+      : '';
+    if (countBadge) countBadge.textContent = shown + ' group' + (shown !== 1 ? 's' : '');
+    tableWrap.style.display = shown === 0 ? 'none' : '';
+    emptyBox.classList.toggle('on', shown === 0);
+  }
+
+  var timer;
+  search.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(apply, 100); });
+  sortSel.addEventListener('change', apply);
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      activeDemand = chip.getAttribute('data-filter');
+      apply();
+    });
+  });
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      search.value = '';
+      sortSel.value = 'default';
+      activeDemand = 'all';
+      chips.forEach(function (c) { c.classList.toggle('active', c.getAttribute('data-filter') === 'all'); });
+      apply();
+    });
+  }
+})();
+</script>
 {% endblock %}

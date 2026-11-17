@@ -2,124 +2,246 @@
 {% block title %}{{ form_title or 'Add Product' }}{% endblock %}
 {% block page_title %}{{ form_title or 'Add Product' }}{% endblock %}
 
+{% block head %}
+<style>
+  .ap-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .8fr); gap: 22px; align-items: start; }
+  .ap-side { position: sticky; top: calc(var(--topbar-h) + 18px); display: grid; gap: 16px; }
+  .ap-section-title {
+    display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 800; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--txt2); margin: 4px 0 14px;
+  }
+  .ap-section-title .num {
+    width: 24px; height: 24px; border-radius: 50%; background: var(--green-100); color: var(--green-800);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 12px;
+  }
+  .ap-section + .ap-section { margin-top: 10px; padding-top: 20px; border-top: 1px dashed var(--border); }
+
+  .ap-unit-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .ap-unit-chip {
+    padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border); background: var(--n50);
+    color: var(--txt2); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .15s;
+  }
+  .ap-unit-chip:hover { border-color: var(--green-300); color: var(--green-800); }
+  .ap-unit-chip.active { background: var(--green-600); border-color: var(--green-600); color: #fff; }
+
+  .ap-organic {
+    display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 12px 14px;
+    border: 1.5px solid var(--border); border-radius: 14px; transition: border-color .15s, background .15s;
+  }
+  .ap-organic:has(input:checked) { border-color: var(--green-500); background: var(--green-50); }
+  .ap-organic input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+
+  .ap-counter { font-size: 11.5px; color: var(--txt3); text-align: right; margin-top: 4px; }
+
+  .ap-dropzone {
+    border: 2px dashed var(--border); border-radius: 16px; padding: 26px; text-align: center; cursor: pointer;
+    transition: border-color .15s, background .15s; background: var(--n50);
+  }
+  .ap-dropzone:hover, .ap-dropzone.is-over { border-color: var(--accent); background: var(--green-50); }
+  .ap-dropzone:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(22,163,74,.15); }
+
+  /* Live preview card (mirrors marketplace card) */
+  .ap-preview-lbl { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--txt3); margin-bottom: 8px; }
+  .ap-pcard { background: #fff; border: 1px solid var(--border); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-md); }
+  .ap-pmedia { position: relative; aspect-ratio: 4/3; background: var(--green-50); display: flex; align-items: center; justify-content: center; font-size: 46px; }
+  .ap-pmedia img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ap-ptag {
+    position: absolute; top: 10px; left: 10px; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 800;
+    background: rgba(255,255,255,.94); color: var(--green-800); box-shadow: 0 2px 8px rgba(15,23,42,.12);
+  }
+  .ap-pbody { padding: 14px 16px; display: grid; gap: 6px; }
+  .ap-pname { font-size: 16px; font-weight: 800; word-break: break-word; }
+  .ap-pdesc { font-size: 13px; color: var(--txt2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ap-prow { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; margin-top: 4px; }
+  .ap-pprice { font-size: 20px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .ap-pprice small { font-size: 12px; font-weight: 600; color: var(--txt2); }
+  .ap-pstock { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 99px; background: var(--green-100); color: var(--green-700); white-space: nowrap; }
+  .ap-pfoot { padding: 12px 16px; border-top: 1px solid var(--border); }
+  .ap-pfoot span { display: block; text-align: center; padding: 8px; border-radius: 10px; background: var(--green-600); color: #fff; font-size: 13px; font-weight: 700; }
+
+  .ap-tips { display: grid; gap: 10px; }
+  .ap-tip { display: flex; gap: 10px; font-size: 13px; color: var(--txt2); line-height: 1.45; }
+  .ap-tip b { color: var(--txt); }
+
+  @media (max-width: 960px) {
+    .ap-grid { grid-template-columns: 1fr; }
+    .ap-side { position: static; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<div class="ph">
-  <div>
-    <div class="ph-title">{{ form_title or 'List a New Product' }}</div>
-    <div class="ph-sub">{{ form_subtitle or 'Choose the unit, stock amount, and price that fits what you sell' }}</div>
+{% set current_unit = product.unit if product else 'kg' %}
+{% set is_custom_unit = product and current_unit not in product_unit_values %}
+
+<div class="pg-hero" data-emoji="🌱">
+  <div class="pg-hero-inner">
+    <div>
+      <div class="pg-kicker">{{ 'Edit Listing' if product else 'New Listing' }}</div>
+      <div class="pg-title">{{ form_title or 'List a New Product' }}</div>
+      <div class="pg-sub">{{ form_subtitle or 'Choose the unit, stock amount, and price that fits what you sell. Listings are reviewed by admin before going live.' }}</div>
+    </div>
+    <div class="pg-actions">
+      <a href="{{ url_for('dashboard') }}" class="btn pg-btn-ghost btn-sm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Dashboard
+      </a>
+    </div>
   </div>
-  <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-    Back
-  </a>
 </div>
 
-<div style="max-width:680px">
-  <div class="card">
-    <div class="card-hd">
-      <span class="card-hd-title">Product Details</span>
-    </div>
-    <div class="card-body">
-      {% set current_unit = product.unit if product else 'kg' %}
-      {% set is_custom_unit = product and current_unit not in product_unit_values %}
-      <form method="POST" enctype="multipart/form-data">
+<div class="ap-grid">
+  <div>
+    <div class="card card-r20">
+      <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" id="productForm">
 
-        <div class="form-group">
-          <label class="form-label" for="name">Product Name</label>
-          <input class="form-control" id="name" name="name" value="{{ product.name if product else '' }}" placeholder="e.g. Fresh Organic Tomatoes" required autofocus>
-        </div>
-
-        <div class="form-row cols-2">
-          <div class="form-group">
-            <label class="form-label" for="unit">Selling Unit</label>
-            <select class="form-control" id="unit" name="unit" required onchange="toggleCustomUnit(this.value)">
-              {% for value, label in product_units %}
-                <option value="{{ value }}" {{ 'selected' if (is_custom_unit and value == 'custom') or (not is_custom_unit and current_unit == value) else '' }}>{{ label }}</option>
-              {% endfor %}
-            </select>
-            <div class="form-hint">Choose how this product is sold.</div>
-          </div>
-          <div class="form-group" id="customUnitGroup" style="display:none">
-            <label class="form-label" for="custom_unit">Custom Unit</label>
-            <input class="form-control" id="custom_unit" name="custom_unit" value="{{ current_unit if is_custom_unit else '' }}" placeholder="e.g. basket, pack, box">
-          </div>
-        </div>
-
-        <div class="form-row cols-2">
-          <div class="form-group">
-            <label class="form-label" for="quantity">Available Quantity</label>
-            <input class="form-control" id="quantity" name="quantity" type="number" min="0.01" step="0.01" value="{{ product.quantity|qty if product else '' }}" placeholder="e.g. 50" required>
-            <div class="form-hint">Example: 50 kg, 20 pieces, 3 sacks.</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="price">Price per Unit (&#8369;)</label>
-            <input class="form-control" id="price" name="price" type="number" step="0.01" min="0.01" value="{{ '%.2f'|format(product.price or 0) if product else '' }}" placeholder="e.g. 120.00" required>
-            <div class="form-hint">Example: &#8369;50 per kg or &#8369;20 per piece.</div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Product Type</label>
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-md);transition:border-color .15s">
-            <input type="checkbox" id="is_organic" name="is_organic" value="1" style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer" {{ 'checked' if product and product.description and 'organic' in product.description.lower() else '' }}>
-            <span>
-              <span class="font-bold text-sm">🌿 Organic Product</span>
-              <span class="text-muted text-xs" style="display:block">Check if this product is organically grown — improves AI price accuracy</span>
-            </span>
-          </label>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="description">Description</label>
-          <textarea class="form-control" id="description" name="description" placeholder="Describe freshness, variety, harvest date, farming method..." rows="4">{{ product.description if product else '' }}</textarea>
-        </div>
-
-        <div class="form-group" style="margin-bottom:24px">
-          <label class="form-label">Product Photo</label>
-          <div id="dropzone" style="border:2px dashed var(--border);border-radius:var(--r-lg);padding:28px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s" onclick="document.getElementById('imageInput').click()">
-            <div id="dropzone-content">
-              <div style="font-size:32px;margin-bottom:8px">📷</div>
-              <div class="font-bold text-sm">Click to upload photo</div>
-              <div class="text-muted text-xs mt-1">PNG, JPG, GIF, or WEBP up to 5MB{{ ' - leave blank to keep current photo' if product else '' }}</div>
+          <div class="ap-section">
+            <div class="ap-section-title"><span class="num">1</span> Product basics</div>
+            <div class="form-group">
+              <label class="form-label" for="name">Product Name</label>
+              <input class="form-control" id="name" name="name" maxlength="100" value="{{ product.name if product else '' }}" placeholder="e.g. Fresh Organic Tomatoes" required autofocus>
             </div>
-            <img id="preview" src="{{ '/static/uploads/' + product.image if product and product.image else '' }}" alt="" style="{{ 'display:block;' if product and product.image else 'display:none;' }}max-width:100%;max-height:200px;border-radius:var(--r-md);margin-top:12px">
+
+            <div class="form-group">
+              <label class="form-label">Product Type</label>
+              <label class="ap-organic">
+                <input type="checkbox" id="is_organic" name="is_organic" value="1" {{ 'checked' if product and product.description and 'organic' in product.description.lower() else '' }}>
+                <span>
+                  <span class="font-bold text-sm">🌿 Organic Product</span>
+                  <span class="text-muted text-xs" style="display:block">Check if this product is organically grown — improves AI price accuracy</span>
+                </span>
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="description">Description</label>
+              <textarea class="form-control" id="description" name="description" maxlength="1000" placeholder="Describe freshness, variety, harvest date, farming method..." rows="4">{{ product.description if product else '' }}</textarea>
+              <div class="ap-counter"><span id="descCount">0</span> / 1000</div>
+            </div>
           </div>
-          <input type="file" id="imageInput" name="image" accept="image/*" style="display:none" onchange="previewImage(this)">
-        </div>
 
-        <div class="flex gap-3">
-          <button type="submit" class="btn btn-primary btn-lg" style="flex:1">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            {{ submit_label or 'Save Product' }}
-          </button>
-          <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-lg">Cancel</a>
-        </div>
+          <div class="ap-section">
+            <div class="ap-section-title"><span class="num">2</span> Unit, stock &amp; price</div>
+            <div class="form-row cols-2">
+              <div class="form-group">
+                <label class="form-label" for="unit">Selling Unit</label>
+                <select class="form-control" id="unit" name="unit" required onchange="toggleCustomUnit(this.value)">
+                  {% for value, label in product_units %}
+                    <option value="{{ value }}" {{ 'selected' if (is_custom_unit and value == 'custom') or (not is_custom_unit and current_unit == value) else '' }}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <div class="ap-unit-chips" id="unitChips">
+                  {% for value, label in product_units %}
+                    {% if value in ['kg', 'piece', 'bundle', 'sack', 'crate'] %}
+                      <button type="button" class="ap-unit-chip" data-unit="{{ value }}">{{ value }}</button>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="form-group" id="customUnitGroup" style="display:none">
+                <label class="form-label" for="custom_unit">Custom Unit</label>
+                <input class="form-control" id="custom_unit" name="custom_unit" value="{{ current_unit if is_custom_unit else '' }}" placeholder="e.g. basket, pack, box">
+              </div>
+            </div>
 
-      </form>
-    </div>
-  </div>
+            <div class="form-row cols-2">
+              <div class="form-group">
+                <label class="form-label" for="quantity">Available Quantity</label>
+                <input class="form-control" id="quantity" name="quantity" type="number" min="0.01" step="0.01" value="{{ product.quantity|qty if product else '' }}" placeholder="e.g. 50" required>
+                <div class="form-hint">Example: 50 kg, 20 pieces, 3 sacks.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="price">Price per Unit (&#8369;)</label>
+                <input class="form-control" id="price" name="price" type="number" step="0.01" min="0.01" value="{{ '%.2f'|format(product.price or 0) if product else '' }}" placeholder="e.g. 120.00" required>
+                <div class="form-hint">AI checks your price against the market as you type.</div>
+              </div>
+            </div>
 
-  {# ── AI Price Intelligence Panel ─────────────────────────────────────────── #}
-  <div id="ai-price-panel" style="display:none;margin-top:16px;transition:all .3s">
-    <div class="card" id="ai-price-card" style="border-left:4px solid var(--border);transition:border-color .3s">
-      <div class="card-body" style="padding:16px 20px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="font-size:20px" id="ai-icon">🤖</span>
-          <span class="font-bold" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">AI Price Intelligence</span>
-          <span id="ai-spinner" style="display:none;margin-left:auto;font-size:12px;color:var(--muted);font-style:italic">Analysing…</span>
-        </div>
-        <div id="ai-price-message" class="text-sm" style="line-height:1.6;color:var(--text)"></div>
-        <div id="ai-price-suggestion" style="display:none;margin-top:10px;padding:10px 14px;border-radius:var(--r-md);background:#fffbeb;border:1px solid #fcd34d">
-          <span class="font-bold text-sm">💡 Suggested ceiling: </span>
-          <span id="ai-suggested-val" class="font-bold" style="color:#b45309;font-size:15px"></span>
-          <span class="text-muted text-xs" id="ai-reduction-pct" style="margin-left:4px"></span>
-          <button type="button" id="ai-apply-btn" onclick="applyAiPrice()" class="btn btn-secondary btn-sm" style="margin-left:12px;font-size:11px">Apply</button>
-        </div>
+            {# ── AI Price Intelligence Panel ── #}
+            <div id="ai-price-panel" style="display:none;margin-bottom:16px">
+              <div class="card" id="ai-price-card" style="border-left:4px solid var(--border);border-radius:14px;transition:border-color .3s">
+                <div class="card-body" style="padding:14px 18px">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                    <span style="font-size:20px" id="ai-icon">🤖</span>
+                    <span class="font-bold" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--txt2)">AI Price Intelligence</span>
+                    <span id="ai-spinner" style="display:none;margin-left:auto;font-size:12px;color:var(--txt2);font-style:italic">Analysing…</span>
+                  </div>
+                  <div id="ai-price-message" class="text-sm" style="line-height:1.6;color:var(--txt)"></div>
+                  <div id="ai-price-suggestion" style="display:none;margin-top:10px;padding:10px 14px;border-radius:var(--r-md);background:#fffbeb;border:1px solid #fcd34d">
+                    <span class="font-bold text-sm">💡 Suggested ceiling: </span>
+                    <span id="ai-suggested-val" class="font-bold" style="color:#b45309;font-size:15px"></span>
+                    <span class="text-muted text-xs" id="ai-reduction-pct" style="margin-left:4px"></span>
+                    <button type="button" id="ai-apply-btn" onclick="applyAiPrice()" class="btn btn-secondary btn-sm" style="margin-left:12px;font-size:11px">Apply</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ap-section">
+            <div class="ap-section-title"><span class="num">3</span> Product photo</div>
+            <div class="form-group" style="margin-bottom:22px">
+              <div id="dropzone" class="ap-dropzone" tabindex="0" role="button" aria-label="Upload product photo" onclick="document.getElementById('imageInput').click()">
+                <div id="dropzone-content">
+                  <div style="font-size:32px;margin-bottom:8px">📷</div>
+                  <div class="font-bold text-sm">Click or drag a photo here</div>
+                  <div class="text-muted text-xs mt-1">PNG, JPG, GIF, or WEBP up to 5MB{{ ' - leave blank to keep current photo' if product else '' }}</div>
+                </div>
+                <img id="preview" src="{{ '/static/uploads/' + product.image if product and product.image else '' }}" alt="" style="{{ 'display:block;' if product and product.image else 'display:none;' }}max-width:100%;max-height:200px;border-radius:var(--r-md);margin:12px auto 0">
+                <div id="changePhotoHint" class="text-muted text-xs mt-2" style="{{ '' if product and product.image else 'display:none' }}">Click to change photo</div>
+              </div>
+              <input type="file" id="imageInput" name="image" accept="image/*" style="display:none" onchange="previewImage(this)">
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button type="submit" class="btn btn-primary btn-lg" style="flex:1" id="submitBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              {{ submit_label or 'Save Product' }}
+            </button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-lg">Cancel</a>
+          </div>
+
+        </form>
       </div>
     </div>
   </div>
 
+  <aside class="ap-side">
+    <div>
+      <div class="ap-preview-lbl">Live marketplace preview</div>
+      <div class="ap-pcard" aria-live="polite">
+        <div class="ap-pmedia" id="pvMedia">
+          <span class="ap-ptag" id="pvOrganic" style="display:none">🌿 Organic</span>
+          <span id="pvPlaceholder">🌿</span>
+        </div>
+        <div class="ap-pbody">
+          <div class="ap-pname" id="pvName">Your product name</div>
+          <div class="ap-pdesc" id="pvDesc">Your description will appear here.</div>
+          <div class="text-muted text-xs">📍 {{ current_user.location or 'Your farm' }}</div>
+          <div class="ap-prow">
+            <div class="ap-pprice" id="pvPrice">&#8369;0.00 <small>/ kg</small></div>
+            <span class="ap-pstock" id="pvStock">0 kg left</span>
+          </div>
+        </div>
+        <div class="ap-pfoot"><span>Buy Now</span></div>
+      </div>
+    </div>
+
+    <div class="card card-r20">
+      <div class="card-body" style="padding:18px">
+        <div class="font-bold text-sm mb-2">💡 Listing tips</div>
+        <div class="ap-tips">
+          <div class="ap-tip"><span>📸</span><span><b>Bright, close photos</b> get noticeably more orders.</span></div>
+          <div class="ap-tip"><span>🗓️</span><span><b>Mention the harvest date</b> so buyers know it's fresh.</span></div>
+          <div class="ap-tip"><span>⚖️</span><span><b>Pick the unit buyers expect</b> — kg for produce, sacks for grains.</span></div>
+          <div class="ap-tip"><span>✅</span><span><b>Admin approval</b> is required before it appears in the marketplace.</span></div>
+        </div>
+      </div>
+    </div>
+  </aside>
 </div>
 
 {% endblock %}
@@ -130,6 +252,65 @@
 const FARMER_LOCATION = {{ current_user.location | tojson }};
 </script>
 <script>
+/* ── Live preview ────────────────────────────────────────────────────────── */
+function currentUnitLabel() {
+  const unitSel = document.getElementById('unit');
+  if (unitSel.value === 'custom') {
+    return (document.getElementById('custom_unit').value || 'unit').trim() || 'unit';
+  }
+  return unitSel.value || 'unit';
+}
+
+function formatQty(v) {
+  if (!isFinite(v)) return '0';
+  return Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+}
+
+function updateLivePreview() {
+  const name = document.getElementById('name').value.trim();
+  const desc = document.getElementById('description').value.trim();
+  const price = parseFloat(document.getElementById('price').value);
+  const qty = parseFloat(document.getElementById('quantity').value);
+  const unit = currentUnitLabel();
+  const organic = document.getElementById('is_organic').checked;
+
+  document.getElementById('pvName').textContent = name || 'Your product name';
+  document.getElementById('pvDesc').textContent = desc || 'Your description will appear here.';
+  document.getElementById('pvOrganic').style.display = organic ? '' : 'none';
+
+  const priceEl = document.getElementById('pvPrice');
+  priceEl.textContent = '';
+  priceEl.appendChild(document.createTextNode('\u20B1' + (isNaN(price) ? 0 : price).toFixed(2) + ' '));
+  const small = document.createElement('small');
+  small.textContent = '/ ' + unit;
+  priceEl.appendChild(small);
+
+  document.getElementById('pvStock').textContent = formatQty(isNaN(qty) ? 0 : qty) + ' ' + unit + ' left';
+  document.getElementById('descCount').textContent = String(document.getElementById('description').value.length);
+
+  document.querySelectorAll('#unitChips .ap-unit-chip').forEach(function (chip) {
+    chip.classList.toggle('active', chip.getAttribute('data-unit') === document.getElementById('unit').value);
+  });
+}
+
+function setPreviewImage(src) {
+  const media = document.getElementById('pvMedia');
+  let img = media.querySelector('img');
+  const placeholder = document.getElementById('pvPlaceholder');
+  if (src) {
+    if (!img) {
+      img = document.createElement('img');
+      img.alt = 'Product preview';
+      media.appendChild(img);
+    }
+    img.src = src;
+    placeholder.style.display = 'none';
+  } else {
+    if (img) img.remove();
+    placeholder.style.display = '';
+  }
+}
+
 /* ── Image upload helpers ─────────────────────────────────────────────────── */
 function previewImage(input) {
   const file = input.files[0];
@@ -140,6 +321,8 @@ function previewImage(input) {
     preview.src = e.target.result;
     preview.style.display = 'block';
     document.getElementById('dropzone-content').style.display = 'none';
+    document.getElementById('changePhotoHint').style.display = '';
+    setPreviewImage(e.target.result);
   };
   reader.readAsDataURL(file);
 }
@@ -152,28 +335,48 @@ function toggleCustomUnit(value) {
   group.style.display = isCustom ? 'flex' : 'none';
   input.required = isCustom;
   if (!isCustom) input.value = '';
+  updateLivePreview();
 }
 
+document.querySelectorAll('#unitChips .ap-unit-chip').forEach(function (chip) {
+  chip.addEventListener('click', function () {
+    const sel = document.getElementById('unit');
+    sel.value = chip.getAttribute('data-unit');
+    toggleCustomUnit(sel.value);
+  });
+});
+
 toggleCustomUnit(document.getElementById('unit').value);
-if (document.getElementById('preview').getAttribute('src')) {
+const existingPreview = document.getElementById('preview').getAttribute('src');
+if (existingPreview) {
   document.getElementById('dropzone-content').style.display = 'none';
+  setPreviewImage(existingPreview);
 }
+
+['name', 'description', 'price', 'quantity', 'custom_unit'].forEach(function (id) {
+  document.getElementById(id).addEventListener('input', updateLivePreview);
+});
+document.getElementById('is_organic').addEventListener('change', updateLivePreview);
+updateLivePreview();
 
 /* ── Drag-and-drop ───────────────────────────────────────────────────────── */
 const dz = document.getElementById('dropzone');
+dz.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    document.getElementById('imageInput').click();
+  }
+});
 dz.addEventListener('dragover', e => {
   e.preventDefault();
-  dz.style.borderColor = 'var(--accent)';
-  dz.style.background  = 'var(--green-50)';
+  dz.classList.add('is-over');
 });
 dz.addEventListener('dragleave', () => {
-  dz.style.borderColor = '';
-  dz.style.background  = '';
+  dz.classList.remove('is-over');
 });
 dz.addEventListener('drop', e => {
   e.preventDefault();
-  dz.style.borderColor = '';
-  dz.style.background  = '';
+  dz.classList.remove('is-over');
   const file = e.dataTransfer.files[0];
   if (file && file.type.startsWith('image/')) {
     const input = document.getElementById('imageInput');
@@ -182,6 +385,13 @@ dz.addEventListener('drop', e => {
     input.files = dt.files;
     previewImage(input);
   }
+});
+
+/* ── Submit loading state ────────────────────────────────────────────────── */
+document.getElementById('productForm').addEventListener('submit', function () {
+  const btn = document.getElementById('submitBtn');
+  btn.style.pointerEvents = 'none';
+  btn.style.opacity = '.85';
 });
 
 /* ── AI Price Simulation ─────────────────────────────────────────────────── */
@@ -202,6 +412,7 @@ function applyAiPrice() {
   if (_lastSuggested) {
     document.getElementById('price').value = _lastSuggested.toFixed(2);
     document.getElementById('ai-price-panel').style.display = 'none';
+    updateLivePreview();
   }
 }
 

@@ -127,7 +127,7 @@
   {% set _st = _si.available if _si else (p.quantity or 0) %}
   {% if _st > 0 %}{% set ns.instock = ns.instock + 1 %}{% endif %}
   {% if _st > 0 and _st <= 5 %}{% set ns.low = ns.low + 1 %}{% endif %}
-  {% if 'organic' in ((p.description or '')|lower) %}{% set ns.organic = ns.organic + 1 %}{% endif %}
+  {% if 'organic' in ((p.name ~ ' ' ~ (p.description or ''))|lower) %}{% set ns.organic = ns.organic + 1 %}{% endif %}
 {% endfor %}
 
 <div class="mk-hero">
@@ -159,6 +159,7 @@
   </div>
   <select class="mk-sort" id="mkSort" aria-label="Sort products">
     <option value="default">Sort: Featured</option>
+    <option value="organic">Sort: 🌿 Organic First</option>
     <option value="price-asc">Price: Low to High</option>
     <option value="price-desc">Price: High to Low</option>
     <option value="rating">Top Rated</option>
@@ -182,7 +183,7 @@
   {% set stock_info = availability[p.id] if availability is defined and p.id in availability else none %}
   {% set stock = stock_info.available if stock_info else (p.quantity or 0) %}
   {% set rating = rating_summary[p.id] if rating_summary is defined and p.id in rating_summary else none %}
-  {% set is_organic = 'organic' in ((p.description or '')|lower) %}
+  {% set is_organic = 'organic' in ((p.name ~ ' ' ~ (p.description or ''))|lower) %}
   {% set farmer_loc = p.farmer.location if p.farmer and p.farmer.location else '' %}
   <div class="product-card mk-card {{ 'sold-out' if stock <= 0 }}"
        data-index="{{ loop.index0 }}"
@@ -305,6 +306,7 @@
     var mode = sortSel.value;
     var sorted = cards.slice().sort(function (a, b) {
       switch (mode) {
+        case 'organic':    return (num(b, 'organic') - num(a, 'organic')) || (num(a, 'index') - num(b, 'index'));
         case 'price-asc':  return num(a, 'price') - num(b, 'price');
         case 'price-desc': return num(b, 'price') - num(a, 'price');
         case 'rating':     return num(b, 'rating') - num(a, 'rating');

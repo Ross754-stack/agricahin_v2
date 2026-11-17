@@ -2,178 +2,191 @@
 {% block title %}Admin Workspace{% endblock %}
 {% block page_title %}Admin Workspace{% endblock %}
 
+{% block head %}
+<style>
+  html, body { overflow-x: hidden; }
+
+  @media (min-width: 600px) {
+    .action-cell { min-width: 280px; }
+    .action-cell-sm { min-width: 260px; }
+    .action-cell-lg { min-width: 300px; }
+  }
+
+  /* ── Section tab bar ── */
+  .adm-tabs {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    padding: 10px 12px; margin-bottom: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-lg); box-shadow: var(--shadow-sm);
+  }
+  .adm-tab {
+    display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px;
+    border-radius: 12px; border: 1.5px solid transparent; background: transparent;
+    color: var(--txt2); font: inherit; font-size: 13.5px; font-weight: 700;
+    cursor: pointer; transition: all .15s;
+  }
+  .adm-tab:hover { background: var(--n50); color: var(--txt); }
+  .adm-tab.active {
+    background: var(--green-600); color: #fff;
+    box-shadow: 0 6px 14px rgba(22,163,74,.22);
+  }
+  .adm-tab .n {
+    font-size: 11px; padding: 1px 7px; border-radius: 99px;
+    background: rgba(0,0,0,.07); font-weight: 800;
+  }
+  .adm-tab.active .n { background: rgba(255,255,255,.24); }
+  .adm-section.tab-hidden { display: none; }
+
+  .adm-subbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--n50);
+  }
+  .adm-subbar .f-search { max-width: 340px; }
+
+  /* ── AI chart grid responsive layout ── */
+  #ai-charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    border-top: 1px solid #e2e8f0;
+  }
+  .ai-chart-col {
+    padding: 20px 16px;
+    text-align: center;
+    border-right: 1px solid #e2e8f0;
+  }
+  .ai-chart-col:last-child { border-right: none; }
+  .ai-chart-lbl {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 10px;
+  }
+  @media (max-width: 860px) {
+    #ai-charts-grid { grid-template-columns: 1fr 1fr !important; }
+    .ai-chart-col:nth-child(2) { border-right: none !important; }
+    .ai-chart-col:nth-child(1),
+    .ai-chart-col:nth-child(2) { border-bottom: 1px solid #e2e8f0; }
+    .ai-chart-col:last-child { grid-column: 1 / -1; border-bottom: none; }
+  }
+  @media (max-width: 599px) {
+    #ai-charts-grid { grid-template-columns: 1fr 1fr !important; }
+    .ai-chart-col { padding: 14px 10px !important; border-right: 1px solid #e2e8f0; }
+    .ai-chart-col:nth-child(2) { border-right: none !important; }
+    .ai-chart-col:nth-child(1),
+    .ai-chart-col:nth-child(2) { border-bottom: 1px solid #e2e8f0; }
+    .ai-chart-col:last-child { grid-column: 1 / -1 !important; border-right: none !important; border-bottom: none; padding: 14px 16px !important; }
+    .ai-chart-lbl { font-size: 10px; margin-bottom: 8px; }
+    .adm-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .adm-tabs::-webkit-scrollbar { display: none; }
+    .adm-tab { flex-shrink: 0; padding: 8px 12px; font-size: 12.5px; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<div class="ph">
-  <div>
-    <div class="ph-title">Admin Workspace</div>
-    <div class="ph-sub">Products, reports, complaints, and platform notices</div>
-  </div>
-  <div class="admin-ph-nav">
-    <a href="#products" class="btn btn-secondary btn-sm">Products</a>
-    <a href="#reports" class="btn btn-secondary btn-sm">Reports</a>
-    <a href="#complaints" class="btn btn-secondary btn-sm">Complaints</a>
-    <a href="#users" class="btn btn-secondary btn-sm">Users</a>
-    <a href="#notifications" class="btn btn-secondary btn-sm">Notify</a>
+{% set p_ns = namespace(pending=0, approved=0, rejected=0, deleted=0) %}
+{% for p in products %}
+  {% if p.is_deleted %}{% set p_ns.deleted = p_ns.deleted + 1 %}
+  {% elif p.review.status == 'Approved' %}{% set p_ns.approved = p_ns.approved + 1 %}
+  {% elif p.review.status == 'Rejected' %}{% set p_ns.rejected = p_ns.rejected + 1 %}
+  {% else %}{% set p_ns.pending = p_ns.pending + 1 %}
+  {% endif %}
+{% endfor %}
+
+{% set c_ns = namespace(open=0, review=0, resolved=0, dismissed=0) %}
+{% for c in complaints %}
+  {% if c.status == 'Resolved' %}{% set c_ns.resolved = c_ns.resolved + 1 %}
+  {% elif c.status == 'In Review' %}{% set c_ns.review = c_ns.review + 1 %}
+  {% elif c.status == 'Dismissed' %}{% set c_ns.dismissed = c_ns.dismissed + 1 %}
+  {% else %}{% set c_ns.open = c_ns.open + 1 %}
+  {% endif %}
+{% endfor %}
+
+{% set u_ns = namespace(farmers=0, buyers=0, suspended=0) %}
+{% for u in users %}
+  {% if u.role == 'farmer' %}{% set u_ns.farmers = u_ns.farmers + 1 %}
+  {% elif u.role == 'buyer' %}{% set u_ns.buyers = u_ns.buyers + 1 %}{% endif %}
+  {% if u.disabled %}{% set u_ns.suspended = u_ns.suspended + 1 %}{% endif %}
+{% endfor %}
+
+<div class="pg-hero" data-emoji="🛡️">
+  <div class="pg-hero-inner">
+    <div>
+      <div class="pg-kicker">Platform Moderation &amp; Control</div>
+      <div class="pg-title">Admin Workspace</div>
+      <div class="pg-sub">Review product listings, inspect AI risk signals, resolve complaints, manage users, and send notices.</div>
+    </div>
+    <div class="pg-actions">
+      {% if report.pending_products %}
+        <span class="pg-pill warn">{{ report.pending_products }} pending product{{ 's' if report.pending_products != 1 }}</span>
+      {% endif %}
+      {% if report.open_complaints %}
+        <span class="pg-pill warn">{{ report.open_complaints }} open complaint{{ 's' if report.open_complaints != 1 }}</span>
+      {% endif %}
+      <a href="{{ url_for('admin_download_report') }}" class="btn pg-btn-light btn-sm">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+        Export CSV
+      </a>
+    </div>
   </div>
 </div>
-<style>
-/* ── Prevent horizontal viewport overflow on mobile ── */
-html, body {
-  overflow-x: hidden;
-}
 
-@media (min-width: 600px) {
-  .action-cell { min-width: 280px; }
-  .action-cell-sm { min-width: 260px; }
-  .action-cell-lg { min-width: 300px; }
-}
+<div class="kpi-grid">
+  <div class="kpi k-amber">
+    <div class="kpi-top">
+      <span class="kpi-lbl">Pending Products</span>
+      <span class="kpi-ico si-amber">
+        <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18"/></svg>
+      </span>
+    </div>
+    <div class="kpi-val">{{ report.pending_products }}</div>
+    <div class="kpi-note">Of {{ report.total_products }} total listings</div>
+  </div>
 
-/* ── Admin page-header quick-jump buttons ── */
-.admin-ph-nav {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;        /* wraps naturally on all sizes */
-  align-items: center;
-}
-.admin-ph-nav .btn {
-  font-size: 13px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  min-height: 34px;
-}
-/* On mobile: full-width row, all 5 buttons in a 3+2 grid */
-@media (max-width: 599px) {
-  .admin-ph-nav {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);  /* 3 per row */
-    gap: 6px;
-  }
-  .admin-ph-nav .btn {
-    width: 100%;
-    text-align: center;
-    justify-content: center;
-    font-size: 12px;
-    padding: 7px 4px;
-    min-height: 36px;
-    border-radius: 12px;
-  }
-}
-</style>
+  <div class="kpi k-green">
+    <div class="kpi-top">
+      <span class="kpi-lbl">Sales</span>
+      <span class="kpi-ico si-green">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      </span>
+    </div>
+    <div class="kpi-val">&#8369;{{ "%.2f"|format(report.total_sales) }}</div>
+    <div class="kpi-note good">From {{ report.approved_orders }} approved orders</div>
+  </div>
 
-<div class="grid g4 mb-6">
-  <div class="stat">
-    <div class="stat-icon si-amber">
-      <svg viewBox="0 0 24 24">
-        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-        <path d="M3 6h18" />
-      </svg>
+  <div class="kpi k-blue">
+    <div class="kpi-top">
+      <span class="kpi-lbl">Orders</span>
+      <span class="kpi-ico si-blue">
+        <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/></svg>
+      </span>
     </div>
-    <div>
-      <div class="stat-lbl">Pending Products</div>
-      <div class="stat-val">{{ report.pending_products }}</div>
-    </div>
+    <div class="kpi-val">{{ report.total_orders }}</div>
+    <div class="kpi-note">{{ report.pending_orders }} pending review</div>
   </div>
-  <div class="stat">
-    <div class="stat-icon si-green">
-      <svg viewBox="0 0 24 24">
-        <line x1="12" y1="1" x2="12" y2="23" />
-        <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-      </svg>
+
+  <div class="kpi k-red">
+    <div class="kpi-top">
+      <span class="kpi-lbl">Open Complaints</span>
+      <span class="kpi-ico si-red">
+        <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 01-4 4H7l-4 4V7a4 4 0 014-4h10a4 4 0 014 4z"/></svg>
+      </span>
     </div>
-    <div>
-      <div class="stat-lbl">Sales</div>
-      <div class="stat-val">&#8369;{{ "%.2f"|format(report.total_sales) }}</div>
-    </div>
-  </div>
-  <div class="stat">
-    <div class="stat-icon si-blue">
-      <svg viewBox="0 0 24 24">
-        <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
-      </svg>
-    </div>
-    <div>
-      <div class="stat-lbl">Orders</div>
-      <div class="stat-val">{{ report.total_orders }}</div>
-    </div>
-  </div>
-  <div class="stat">
-    <div class="stat-icon si-red">
-      <svg viewBox="0 0 24 24">
-        <path d="M21 15a4 4 0 01-4 4H7l-4 4V7a4 4 0 014-4h10a4 4 0 014 4z" />
-      </svg>
-    </div>
-    <div>
-      <div class="stat-lbl">Open Complaints</div>
-      <div class="stat-val">{{ report.open_complaints }}</div>
-    </div>
+    <div class="kpi-val">{{ report.open_complaints }}</div>
+    <div class="kpi-note">{{ complaints|length }} total cases</div>
   </div>
 </div>
 
 {# ── AI Intelligence Panel ── Chart.js visual dashboard ─────────────────── #}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
-<style>
-/* ── AI chart grid responsive layout ── */
-#ai-charts-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0;
-  border-top: 1px solid #e2e8f0;
-}
-.ai-chart-col {
-  padding: 20px 16px;
-  text-align: center;
-  border-right: 1px solid #e2e8f0;
-}
-.ai-chart-col:last-child { border-right: none; }
-.ai-chart-lbl {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: #64748b;
-  margin-bottom: 10px;
-}
-/* Tablet → 2-col donuts + full-width bar */
-@media (max-width: 860px) {
-  #ai-charts-grid {
-    grid-template-columns: 1fr 1fr !important;
-  }
-  .ai-chart-col:nth-child(2) { border-right: none !important; }
-  .ai-chart-col:nth-child(1),
-  .ai-chart-col:nth-child(2) { border-bottom: 1px solid #e2e8f0; }
-  .ai-chart-col:last-child {
-    grid-column: 1 / -1;
-    border-bottom: none;
-  }
-}
-/* Mobile → 2-col donuts compact, bar full-width below */
-@media (max-width: 599px) {
-  #ai-charts-grid {
-    grid-template-columns: 1fr 1fr !important;
-  }
-  .ai-chart-col {
-    padding: 14px 10px !important;
-    border-right: 1px solid #e2e8f0;
-  }
-  .ai-chart-col:nth-child(2) { border-right: none !important; }
-  .ai-chart-col:nth-child(1),
-  .ai-chart-col:nth-child(2) { border-bottom: 1px solid #e2e8f0; }
-  .ai-chart-col:last-child {
-    grid-column: 1 / -1 !important;
-    border-right: none !important;
-    border-bottom: none;
-    padding: 14px 16px !important;
-  }
-  .ai-chart-lbl { font-size: 10px; margin-bottom: 8px; }
-}
-</style>
-
-<div class="card mb-6" id="ai-admin-panel">
+<div class="card card-r20 mb-6" id="ai-admin-panel">
   <div class="card-hd" style="flex-wrap:wrap;gap:10px">
-    <span class="card-hd-title"> AI Intelligence Dashboard</span>
+    <span class="card-hd-title">AI Intelligence Dashboard</span>
     <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
       <span id="ai-status-dot" class="badge b-gray" style="font-size:11px">Checking AI…</span>
       <span style="font-size:11px;color:#64748b">XGBoost v2</span>
@@ -256,14 +269,39 @@ html, body {
   </div>
 </div>
 
-<section id="products" class="mb-6">
-  <div class="card">
+<!-- Workspace Section Tabs -->
+<div class="adm-tabs" id="admTabs" role="tablist" aria-label="Admin sections">
+  <button type="button" class="adm-tab active" data-tab="all" role="tab" aria-selected="true">All Sections</button>
+  <button type="button" class="adm-tab" data-tab="products" role="tab" aria-selected="false">Products <span class="n">{{ products|length }}</span></button>
+  <button type="button" class="adm-tab" data-tab="reports" role="tab" aria-selected="false">Reports</button>
+  <button type="button" class="adm-tab" data-tab="complaints" role="tab" aria-selected="false">Complaints <span class="n">{{ complaints|length }}</span></button>
+  <button type="button" class="adm-tab" data-tab="users" role="tab" aria-selected="false">Users <span class="n">{{ users|length }}</span></button>
+  <button type="button" class="adm-tab" data-tab="notifications" role="tab" aria-selected="false">Notify <span class="n">{{ notification_recipient_count }}</span></button>
+</div>
+
+<section id="products" class="adm-section mb-6">
+  <div class="card card-r20">
     <div class="card-hd">
       <span class="card-hd-title">Manage Products</span>
       <span class="badge b-gray">{{ products|length }} listings</span>
     </div>
     {% if products %}
-    <div class="table-wrap">
+    <div class="adm-subbar">
+      <div class="f-search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="admProdSearch" placeholder="Search products or farmers…" autocomplete="off" aria-label="Search products">
+      </div>
+      <div class="f-chips" id="admProdChips" role="group" aria-label="Filter products by status">
+        <button type="button" class="f-chip active" data-filter="all">All <span class="n">{{ products|length }}</span></button>
+        <button type="button" class="f-chip" data-filter="Pending">Pending <span class="n">{{ p_ns.pending }}</span></button>
+        <button type="button" class="f-chip" data-filter="Approved">Approved <span class="n">{{ p_ns.approved }}</span></button>
+        <button type="button" class="f-chip" data-filter="Rejected">Rejected <span class="n">{{ p_ns.rejected }}</span></button>
+        {% if p_ns.deleted %}
+          <button type="button" class="f-chip" data-filter="Deleted">Deleted <span class="n">{{ p_ns.deleted }}</span></button>
+        {% endif %}
+      </div>
+    </div>
+    <div class="table-wrap" id="admProdWrap">
       <table>
         <thead>
           <tr>
@@ -275,10 +313,15 @@ html, body {
             <th>Review</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="admProdBody">
           {% for p in products %}
           {% set unit = p.unit or 'unit' %}
-          <tr>
+          {% set p_stat = 'Deleted' if p.is_deleted else p.review.status %}
+          {% set f_name = p.farmer.username if p.farmer else 'Unknown' %}
+          {% set f_loc = p.farmer.location if p.farmer else '' %}
+          <tr class="adm-prod-row"
+              data-status="{{ p_stat }}"
+              data-search="{{ (p.name ~ ' ' ~ (p.description or '') ~ ' ' ~ f_name ~ ' ' ~ f_loc ~ ' ' ~ p_stat)|lower }}">
             <td data-label="Product">
               <div class="flex items-center gap-3">
                 {% if p.image %}
@@ -292,14 +335,13 @@ html, body {
                 <div>
                   <div class="font-bold">{{ p.name }}</div>
                   <div class="text-muted text-xs"
-                    style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.description
-                    or 'No description' }}</div>
+                    style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.description or 'No description' }}</div>
                 </div>
               </div>
             </td>
             <td data-label="Farmer">
-              <div class="font-bold text-sm">{{ p.farmer.username if p.farmer else 'Unknown' }}</div>
-              <div class="text-muted text-xs">{{ p.farmer.location if p.farmer else '' }}</div>
+              <div class="font-bold text-sm">{{ f_name }}</div>
+              <div class="text-muted text-xs">{{ f_loc }}</div>
             </td>
             <td data-label="Stock">{{ p.quantity|qty }} {{ unit }}</td>
             <td class="font-bold text-success" data-label="Price">&#8369;{{ "%.2f"|format(p.price) }} / {{ unit }}</td>
@@ -336,6 +378,10 @@ html, body {
         </tbody>
       </table>
     </div>
+    <div class="f-empty" id="admProdEmpty">
+      <div class="font-bold text-sm">No products match this filter</div>
+      <button type="button" class="btn btn-secondary btn-sm mt-3" id="admProdReset">Reset</button>
+    </div>
     {% else %}
     <div class="card-body" style="text-align:center;padding:40px 24px">
       <div class="font-bold">No products yet</div>
@@ -344,18 +390,20 @@ html, body {
   </div>
 </section>
 
-<section id="reports" class="mb-6">
-  <div class="card">
-    <div class="card-hd">
+<section id="reports" class="adm-section mb-6">
+  <div class="card card-r20">
+    <div class="card-hd" style="flex-wrap:wrap;gap:10px">
       <span class="card-hd-title">View Reports</span>
-      <a href="{{ url_for('admin_download_report') }}" class="btn btn-secondary btn-sm">
-        <svg viewBox="0 0 24 24">
-          <path d="M12 3v12" />
-          <path d="M7 10l5 5 5-5" />
-          <path d="M5 21h14" />
-        </svg>
-        Download CSV
-      </a>
+      <div class="flex items-center gap-2" style="flex-wrap:wrap">
+        <a href="{{ url_for('admin_download_report') }}" class="btn btn-secondary btn-sm">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+          Download CSV
+        </a>
+        <a href="{{ url_for('admin_download_training_data') }}" class="btn btn-secondary btn-sm">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+          Training Data CSV
+        </a>
+      </div>
     </div>
     <div class="grid g4" style="padding:16px">
       <div>
@@ -421,14 +469,27 @@ html, body {
   </div>
 </section>
 
-<section id="complaints" class="mb-6">
-  <div class="card">
+<section id="complaints" class="adm-section mb-6">
+  <div class="card card-r20">
     <div class="card-hd">
       <span class="card-hd-title">Handle Complaints</span>
       <span class="badge b-gray">{{ complaints|length }} cases</span>
     </div>
     {% if complaints %}
-    <div class="table-wrap">
+    <div class="adm-subbar">
+      <div class="f-search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="admCompSearch" placeholder="Search subject, message, or user…" autocomplete="off" aria-label="Search complaints">
+      </div>
+      <div class="f-chips" id="admCompChips" role="group" aria-label="Filter complaints by status">
+        <button type="button" class="f-chip active" data-filter="all">All <span class="n">{{ complaints|length }}</span></button>
+        <button type="button" class="f-chip" data-filter="Open">Open <span class="n">{{ c_ns.open }}</span></button>
+        <button type="button" class="f-chip" data-filter="In Review">In Review <span class="n">{{ c_ns.review }}</span></button>
+        <button type="button" class="f-chip" data-filter="Resolved">Resolved <span class="n">{{ c_ns.resolved }}</span></button>
+        <button type="button" class="f-chip" data-filter="Dismissed">Dismissed <span class="n">{{ c_ns.dismissed }}</span></button>
+      </div>
+    </div>
+    <div class="table-wrap" id="admCompWrap">
       <table>
         <thead>
           <tr>
@@ -439,22 +500,24 @@ html, body {
             <th>Resolution</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="admCompBody">
           {% for c in complaints %}
-          <tr>
+          {% set u_name = c.user.username if c.user else 'Unknown' %}
+          <tr class="adm-comp-row"
+              data-status="{{ c.status }}"
+              data-search="{{ (c.subject ~ ' ' ~ c.message ~ ' ' ~ u_name ~ ' ' ~ c.status)|lower }}">
             <td class="action-cell-sm" data-label="Concern">
               <div class="font-bold">{{ c.subject }}</div>
               <div class="text-muted text-sm">{{ c.message }}</div>
               <div class="text-muted text-xs mt-1">{{ c.created_at.strftime('%b %d, %Y %I:%M %p') }}</div>
             </td>
             <td data-label="User">
-              <div class="font-bold text-sm">{{ c.user.username if c.user else 'Unknown' }}</div>
+              <div class="font-bold text-sm">{{ u_name }}</div>
               <div class="text-muted text-xs">{{ c.user.role|capitalize if c.user else '' }}</div>
             </td>
             <td data-label="Order">
               {% if c.order %}
-              <a href="{{ url_for('order_detail', order_id=c.order.id) }}" class="btn btn-secondary btn-sm">#{{
-                c.order.id }}</a>
+              <a href="{{ url_for('order_detail', order_id=c.order.id) }}" class="btn btn-secondary btn-sm">#{{ c.order.id }}</a>
               {% else %}
               <span class="text-muted">None</span>
               {% endif %}
@@ -487,6 +550,10 @@ html, body {
         </tbody>
       </table>
     </div>
+    <div class="f-empty" id="admCompEmpty">
+      <div class="font-bold text-sm">No complaints match this filter</div>
+      <button type="button" class="btn btn-secondary btn-sm mt-3" id="admCompReset">Reset</button>
+    </div>
     {% else %}
     <div class="card-body" style="text-align:center;padding:40px 24px">
       <div class="font-bold">No complaints submitted</div>
@@ -495,14 +562,26 @@ html, body {
   </div>
 </section>
 
-<section id="users" class="mb-6">
-  <div class="card">
+<section id="users" class="adm-section mb-6">
+  <div class="card card-r20">
     <div class="card-hd">
       <span class="card-hd-title">User Management</span>
       <span class="badge b-gray">{{ users|length }} accounts</span>
     </div>
     {% if users %}
-    <div class="table-wrap">
+    <div class="adm-subbar">
+      <div class="f-search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="admUserSearch" placeholder="Search username or location…" autocomplete="off" aria-label="Search users">
+      </div>
+      <div class="f-chips" id="admUserChips" role="group" aria-label="Filter users by role or status">
+        <button type="button" class="f-chip active" data-filter="all">All <span class="n">{{ users|length }}</span></button>
+        <button type="button" class="f-chip" data-filter="farmer">Farmer <span class="n">{{ u_ns.farmers }}</span></button>
+        <button type="button" class="f-chip" data-filter="buyer">Buyer <span class="n">{{ u_ns.buyers }}</span></button>
+        <button type="button" class="f-chip" data-filter="suspended">Suspended <span class="n">{{ u_ns.suspended }}</span></button>
+      </div>
+    </div>
+    <div class="table-wrap" id="admUserWrap">
       <table>
         <thead>
           <tr>
@@ -513,9 +592,12 @@ html, body {
             <th>Action</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="admUserBody">
           {% for u in users %}
-          <tr>
+          <tr class="adm-user-row"
+              data-role="{{ u.role }}"
+              data-disabled="{{ '1' if u.disabled else '0' }}"
+              data-search="{{ (u.username ~ ' ' ~ u.role ~ ' ' ~ (u.location or ''))|lower }}">
             <td data-label="User">
               <div class="flex items-center gap-2">
                 <div class="avatar av-sm">{{ u.username[0].upper() }}</div>
@@ -551,12 +633,16 @@ html, body {
         </tbody>
       </table>
     </div>
+    <div class="f-empty" id="admUserEmpty">
+      <div class="font-bold text-sm">No users match this filter</div>
+      <button type="button" class="btn btn-secondary btn-sm mt-3" id="admUserReset">Reset</button>
+    </div>
     {% endif %}
   </div>
 </section>
 
-<section id="notifications">
-  <div class="card">
+<section id="notifications" class="adm-section">
+  <div class="card card-r20">
     <div class="card-hd">
       <span class="card-hd-title">Manage Notifications</span>
       <span class="badge b-gray">{{ notification_recipient_count }} recipients</span>
@@ -582,14 +668,14 @@ html, body {
         </div>
         <div class="form-group">
           <label class="form-label" for="message">Message</label>
-          <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
+          <textarea class="form-control" id="message" name="message" rows="4" placeholder="Write an announcement or reminder for your selected audience…" required></textarea>
         </div>
         <button type="submit" class="btn btn-primary">
           <svg viewBox="0 0 24 24">
             <path d="M22 2L11 13" />
             <path d="M22 2l-7 20-4-9-9-4 20-7z" />
           </svg>
-          Send
+          Send Notification
         </button>
       </form>
     </div>
@@ -617,6 +703,123 @@ html, body {
 ]
 </script>
 <script>
+  /* ── Admin Section Tabs & Table Filters ─────────────────────────────────── */
+  (function () {
+    const VALID_TABS = ['products', 'reports', 'complaints', 'users', 'notifications'];
+    const tabBtns = Array.from(document.querySelectorAll('#admTabs .adm-tab'));
+    const sections = Array.from(document.querySelectorAll('.adm-section'));
+
+    function activateTab(tabName, updateHash) {
+      const target = VALID_TABS.includes(tabName) ? tabName : 'all';
+      tabBtns.forEach(b => {
+        const on = b.dataset.tab === target;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      sections.forEach(s => {
+        s.classList.toggle('tab-hidden', target !== 'all' && s.id !== target);
+      });
+      if (updateHash) {
+        if (target === 'all') {
+          history.replaceState(null, '', window.location.pathname);
+        } else {
+          history.replaceState(null, '', '#' + target);
+        }
+      }
+    }
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => activateTab(btn.dataset.tab, true));
+    });
+
+    function syncFromHash() {
+      const h = (window.location.hash || '').replace('#', '');
+      activateTab(VALID_TABS.includes(h) ? h : 'all', false);
+    }
+    window.addEventListener('hashchange', syncFromHash);
+    syncFromHash();
+
+    function setupTableFilter(opts) {
+      const rows = Array.from(document.querySelectorAll(opts.rowSelector));
+      if (!rows.length) return;
+      const search = document.getElementById(opts.searchId);
+      const chips = Array.from(document.querySelectorAll('#' + opts.chipsId + ' .f-chip'));
+      const wrap = document.getElementById(opts.wrapId);
+      const empty = document.getElementById(opts.emptyId);
+      const reset = document.getElementById(opts.resetId);
+      let active = 'all';
+
+      function apply() {
+        const q = (search ? search.value : '').trim().toLowerCase();
+        let shown = 0;
+        rows.forEach(r => {
+          const okFilter = opts.matchFilter(r, active);
+          const okSearch = !q || (r.dataset.search || '').includes(q);
+          const show = okFilter && okSearch;
+          r.classList.toggle('f-hidden', !show);
+          if (show) shown++;
+        });
+        if (wrap) wrap.style.display = shown === 0 ? 'none' : '';
+        if (empty) empty.classList.toggle('on', shown === 0);
+      }
+
+      if (search) {
+        let timer;
+        search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(apply, 100); });
+      }
+      chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          chips.forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          active = chip.dataset.filter;
+          apply();
+        });
+      });
+      if (reset) {
+        reset.addEventListener('click', () => {
+          if (search) search.value = '';
+          active = 'all';
+          chips.forEach(c => c.classList.toggle('active', c.dataset.filter === 'all'));
+          apply();
+        });
+      }
+    }
+
+    setupTableFilter({
+      rowSelector: '#admProdBody .adm-prod-row',
+      searchId: 'admProdSearch',
+      chipsId: 'admProdChips',
+      wrapId: 'admProdWrap',
+      emptyId: 'admProdEmpty',
+      resetId: 'admProdReset',
+      matchFilter: (r, f) => f === 'all' || r.dataset.status === f
+    });
+
+    setupTableFilter({
+      rowSelector: '#admCompBody .adm-comp-row',
+      searchId: 'admCompSearch',
+      chipsId: 'admCompChips',
+      wrapId: 'admCompWrap',
+      emptyId: 'admCompEmpty',
+      resetId: 'admCompReset',
+      matchFilter: (r, f) => f === 'all' || r.dataset.status === f
+    });
+
+    setupTableFilter({
+      rowSelector: '#admUserBody .adm-user-row',
+      searchId: 'admUserSearch',
+      chipsId: 'admUserChips',
+      wrapId: 'admUserWrap',
+      emptyId: 'admUserEmpty',
+      resetId: 'admUserReset',
+      matchFilter: (r, f) => {
+        if (f === 'all') return true;
+        if (f === 'suspended') return r.dataset.disabled === '1';
+        return r.dataset.role === f;
+      }
+    });
+  })();
+
   /* ── Admin AI Intelligence Chart Dashboard ───────────────────────────────── */
   document.addEventListener('DOMContentLoaded', async function () {
     const dot = document.getElementById('ai-status-dot');

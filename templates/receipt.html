@@ -2,76 +2,153 @@
 {% block title %}Receipt #{{ order.id }}{% endblock %}
 {% block page_title %}Receipt #{{ order.id }}{% endblock %}
 
+{% block head %}
+<style>
+  .rc-wrap { max-width: 860px; }
+  .rc-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 22px;
+    padding: 32px; box-shadow: var(--shadow-md); position: relative; overflow: hidden;
+  }
+  .rc-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
+    background: linear-gradient(90deg, var(--green-700), var(--green-500), #0f766e);
+  }
+  .rc-head {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap;
+    padding-bottom: 22px; border-bottom: 1px dashed var(--border);
+  }
+  .rc-brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 800; color: var(--green-900); }
+  .rc-brand-mark {
+    width: 38px; height: 38px; border-radius: 12px; background: var(--green-600); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .rc-no { text-align: right; }
+  .rc-no span { display: block; color: var(--txt3); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+  .rc-no strong { display: block; font-size: 22px; font-family: 'DM Mono', monospace; color: var(--txt); margin-top: 2px; }
+  .rc-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 22px; }
+  .rc-party {
+    padding: 16px; border-radius: 14px; background: var(--n50); border: 1px solid var(--border);
+  }
+  .rc-table-box { margin-top: 22px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .rc-total-bar {
+    margin-top: 22px; padding: 18px 20px; border-radius: 16px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border: 1px solid var(--green-200);
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .rc-total-bar strong { font-size: 28px; font-weight: 800; color: var(--green-700); letter-spacing: -.03em; }
+  .rc-meta-foot {
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--txt2);
+  }
+
+  @media (max-width: 640px) {
+    .rc-card { padding: 22px 18px; }
+    .rc-no { text-align: left; }
+    .rc-parties { grid-template-columns: 1fr; }
+  }
+  @media print {
+    .pg-hero { display: none !important; }
+    .rc-card { box-shadow: none; border-color: #d1d5db; padding: 20px; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 {% set unit = order.product.unit or 'unit' %}
 
-<div class="ph">
-  <div>
-    <div class="ph-title">Sales Receipt</div>
-    <div class="ph-sub">Order #{{ order.id }} | Delivered {{ delivery.updated_at.strftime('%b %d, %Y') }}</div>
-  </div>
-  <div class="flex gap-2">
-    <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn btn-secondary">Back</a>
-    <button type="button" class="btn btn-primary" onclick="window.print()">Print</button>
+<div class="pg-hero" data-emoji="🧾">
+  <div class="pg-hero-inner">
+    <div>
+      <div class="pg-kicker">Official Order Invoice</div>
+      <div class="pg-title">Sales Receipt &middot; AGR-{{ "%06d"|format(order.id) }}</div>
+      <div class="pg-sub">Order #{{ order.id }} &middot; Delivered {{ delivery.updated_at.strftime('%b %d, %Y') if delivery.updated_at else 'Confirmed' }}</div>
+    </div>
+    <div class="pg-actions">
+      <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn pg-btn-ghost btn-sm">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Order
+      </a>
+      <button type="button" class="btn pg-btn-light btn-sm" onclick="window.print()">
+        <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print Receipt
+      </button>
+    </div>
   </div>
 </div>
 
-<div class="receipt-card">
-  <div class="receipt-head">
-    <div>
-      <div class="footer-logo">
-        <span class="footer-logo-mark">A</span>
-        <span>AgriChain</span>
+<div class="rc-wrap">
+  <div class="rc-card">
+    <div class="rc-head">
+      <div>
+        <div class="rc-brand">
+          <span class="rc-brand-mark">🌾</span>
+          <span>AgriChain</span>
+        </div>
+        <div class="text-muted text-sm mt-2">Cash on Delivery Sales Receipt</div>
+        <div class="mt-2"><span class="badge b-green">Verified Delivery</span></div>
       </div>
-      <div class="text-muted text-sm mt-2">Cash on Delivery Receipt</div>
+      <div class="rc-no">
+        <span>Receipt No.</span>
+        <strong>AGR-{{ "%06d"|format(order.id) }}</strong>
+        <div class="text-muted text-xs mt-1">Order #{{ order.id }} &middot; {{ delivery.updated_at.strftime('%b %d, %Y') if delivery.updated_at else '' }}</div>
+      </div>
     </div>
-    <div class="receipt-no">
-      <span>Receipt No.</span>
-      <strong>AGR-{{ "%06d"|format(order.id) }}</strong>
+
+    <div class="rc-parties">
+      <div class="rc-party">
+        <div class="section-lbl">Billed &amp; Delivered To (Buyer)</div>
+        <div class="font-bold">{{ order.buyer.username }}</div>
+        <div class="text-muted text-sm mt-1">{{ delivery.shipping_address }}</div>
+        {% if delivery.contact_number %}
+          <div class="text-muted text-xs mt-1">{{ delivery.contact_number }}</div>
+        {% endif %}
+      </div>
+      <div class="rc-party">
+        <div class="section-lbl">Sold &amp; Fulfilled By (Farmer)</div>
+        <div class="font-bold">{{ order.product.farmer.username }}</div>
+        <div class="text-muted text-sm mt-1">{{ order.product.farmer.location or 'Registered AgriChain Farm' }}</div>
+      </div>
+    </div>
+
+    <div class="rc-table-box">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-label="Product" class="font-bold">{{ order.product.name }}</td>
+              <td data-label="Quantity">{{ order.quantity|qty }} {{ unit }}</td>
+              <td data-label="Unit Price">&#8369;{{ "%.2f"|format(order.product.price) }} / {{ unit }}</td>
+              <td class="font-bold text-success" data-label="Total">&#8369;{{ "%.2f"|format(order.total_price) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rc-total-bar">
+      <div>
+        <div class="font-bold text-sm" style="color:var(--green-900)">Total Paid</div>
+        <div class="text-muted text-xs">Settled via {{ order.payment_method }}</div>
+      </div>
+      <strong>&#8369;{{ "%.2f"|format(order.total_price) }}</strong>
+    </div>
+
+    <div class="rc-meta-foot">
+      <span>Payment Method: <strong>{{ order.payment_method }}</strong></span>
+      <span>Delivery Status: <strong>{{ delivery.status }}</strong></span>
+      <span>Thank you for trading on AgriChain!</span>
     </div>
   </div>
-
-  <div class="receipt-grid">
-    <div>
-      <div class="section-lbl">Buyer</div>
-      <div class="font-bold">{{ order.buyer.username }}</div>
-      <div class="text-muted text-sm">{{ delivery.shipping_address }}</div>
-    </div>
-    <div>
-      <div class="section-lbl">Seller</div>
-      <div class="font-bold">{{ order.product.farmer.username }}</div>
-      <div class="text-muted text-sm">{{ order.product.farmer.location }}</div>
-    </div>
-  </div>
-
-  <div class="table-wrap mt-4">
-    <table>
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Quantity</th>
-          <th>Unit Price</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td data-label="Product">{{ order.product.name }}</td>
-          <td data-label="Quantity">{{ order.quantity|qty }} {{ unit }}</td>
-          <td data-label="Unit Price">&#8369;{{ "%.2f"|format(order.product.price) }} / {{ unit }}</td>
-          <td class="font-bold text-success" data-label="Total">&#8369;{{ "%.2f"|format(order.total_price) }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="receipt-total">
-    <span>Total Paid</span>
-    <strong>&#8369;{{ "%.2f"|format(order.total_price) }}</strong>
-  </div>
-
-  <div class="text-muted text-sm mt-4">Payment Method: {{ order.payment_method }}</div>
-  <div class="text-muted text-sm">Status: {{ delivery.status }}</div>
 </div>
 
 {% endblock %}

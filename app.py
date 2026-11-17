@@ -1110,7 +1110,12 @@ def home():
 @app.route('/notifications')
 @login_required
 def notifications():
-    notes = Notification.query.filter_by(user_id=current_user.id).all()
+    notes = (
+        Notification.query
+        .filter_by(user_id=current_user.id)
+        .order_by(Notification.created_at.desc(), Notification.id.desc())
+        .all()
+    )
     return render_template('notifications.html', notes=notes)
 
 @app.route('/complaints', methods=['GET', 'POST'])

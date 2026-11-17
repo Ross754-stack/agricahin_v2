@@ -75,7 +75,8 @@
 
   <div class="card nf-card" id="nfCard">
     <div id="nfList">
-      {% for n in notes %}
+      {% set ordered_notes = (notes|reverse|list) if (notes|length > 1 and (notes[0].id or 0) < (notes[-1].id or 0)) else notes %}
+      {% for n in ordered_notes %}
         {% set msg_l = (n.message or '')|lower %}
         {% if 'order' in msg_l or 'delivery' in msg_l or 'tracking' in msg_l or 'address' in msg_l or 'rating' in msg_l %}
           {% set cat = 'orders' %}{% set ico = '📦' %}{% set cat_label = 'Order' %}

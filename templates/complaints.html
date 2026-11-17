@@ -2,25 +2,91 @@
 {% block title %}Complaints{% endblock %}
 {% block page_title %}Complaints{% endblock %}
 
+{% block head %}
+<style>
+  .cm-grid { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.15fr); gap: 20px; align-items: start; }
+  .cm-topics { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .cm-topic {
+    padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border); background: var(--n50);
+    color: var(--txt2); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .15s;
+  }
+  .cm-topic:hover { border-color: var(--green-300); background: var(--green-50); color: var(--green-800); }
+  .cm-counter { font-size: 11.5px; color: var(--txt3); text-align: right; margin-top: 4px; }
+
+  .cm-case {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 14px; transition: background .14s;
+  }
+  .cm-case:last-child { border-bottom: none; }
+  .cm-case:hover { background: var(--n50); }
+  .cm-case-ico {
+    width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 17px;
+    background: var(--amber-100); color: var(--amber-700);
+  }
+  .cm-case-ico.resolved { background: var(--green-100); color: var(--green-700); }
+  .cm-case-ico.review   { background: var(--blue-100); color: var(--blue-700); }
+  .cm-case-ico.dismissed { background: var(--n100); color: var(--n600); }
+  .cm-id {
+    display: inline-block; padding: 2px 7px; border-radius: 6px; background: var(--n100); border: 1px solid var(--border);
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; color: var(--n700);
+  }
+  .cm-resolution {
+    margin-top: 10px; padding: 10px 12px; border-radius: 12px;
+    background: var(--green-50); border: 1px solid var(--green-200); color: var(--green-900); font-size: 13px;
+  }
+
+  @media (max-width: 880px) {
+    .cm-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<div class="ph">
-  <div>
-    <div class="ph-title">Complaints</div>
-    <div class="ph-sub">{{ complaints|length }} submitted concern{{ 's' if complaints|length != 1 }}</div>
+{% set ns = namespace(open=0, review=0, resolved=0, dismissed=0) %}
+{% for c in complaints %}
+  {% if c.status == 'Resolved' %}
+    {% set ns.resolved = ns.resolved + 1 %}
+  {% elif c.status == 'In Review' %}
+    {% set ns.review = ns.review + 1 %}
+  {% elif c.status == 'Dismissed' %}
+    {% set ns.dismissed = ns.dismissed + 1 %}
+  {% else %}
+    {% set ns.open = ns.open + 1 %}
+  {% endif %}
+{% endfor %}
+
+<div class="pg-hero" data-emoji="💬">
+  <div class="pg-hero-inner">
+    <div>
+      <div class="pg-kicker">Support &amp; Dispute Resolution</div>
+      <div class="pg-title">Complaints &amp; Concerns</div>
+      <div class="pg-sub">Report delivery, product quality, or order issues and track admin resolutions.</div>
+    </div>
+    <div class="pg-actions">
+      <span class="pg-pill">{{ complaints|length }} submitted concern{{ 's' if complaints|length != 1 }}</span>
+    </div>
   </div>
 </div>
 
-<div class="grid g2">
-  <div class="card">
+<div class="cm-grid">
+  <div class="card card-r20">
     <div class="card-hd">
       <span class="card-hd-title">Submit Concern</span>
+      <span class="badge b-green">Admin reviewed</span>
     </div>
     <div class="card-body">
       <form method="POST">
         <div class="form-group">
           <label class="form-label" for="subject">Subject</label>
-          <input class="form-control" id="subject" name="subject" maxlength="150" required>
+          <input class="form-control" id="subject" name="subject" maxlength="150" placeholder="Short summary of the issue" required>
+          <div class="cm-topics" aria-label="Quick subject topics">
+            <button type="button" class="cm-topic" data-topic="Late delivery">Late delivery</button>
+            <button type="button" class="cm-topic" data-topic="Product quality">Product quality</button>
+            <button type="button" class="cm-topic" data-topic="Quantity mismatch">Quantity mismatch</button>
+            <button type="button" class="cm-topic" data-topic="Order update">Order update</button>
+          </div>
         </div>
 
         <div class="form-group">
@@ -37,55 +103,147 @@
 
         <div class="form-group">
           <label class="form-label" for="message">Concern</label>
-          <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+          <textarea class="form-control" id="message" name="message" rows="5" placeholder="Describe what happened and what help you need…" required></textarea>
+          <div class="cm-counter"><span id="cmMsgCount">0</span> characters</div>
         </div>
 
-        <button type="submit" class="btn btn-primary">
+        <button type="submit" class="btn btn-primary btn-block">
           <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-          Submit
+          Submit Concern
         </button>
       </form>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-hd">
+  <div class="card card-r20">
+    <div class="card-hd" style="flex-wrap:wrap;gap:10px">
       <span class="card-hd-title">Your Cases</span>
+      <span class="badge b-gray">{{ complaints|length }} total</span>
     </div>
+
     {% if complaints %}
-      {% for c in complaints %}
-      <div class="notif-item" style="align-items:flex-start">
-        <div class="notif-icon">!</div>
-        <div style="min-width:0">
-          <div class="font-bold">{{ c.subject }}</div>
-          <div class="text-muted text-sm">{{ c.message }}</div>
-          <div class="flex items-center gap-2 mt-2">
-            {% if c.status == 'Resolved' %}
-              <span class="badge b-green">{{ c.status }}</span>
-            {% elif c.status == 'Dismissed' %}
-              <span class="badge b-gray">{{ c.status }}</span>
-            {% elif c.status == 'In Review' %}
-              <span class="badge b-blue">{{ c.status }}</span>
-            {% else %}
-              <span class="badge b-amber">{{ c.status }}</span>
-            {% endif %}
-            {% if c.order_id %}
-              <span class="badge b-gray">Order #{{ c.order_id }}</span>
-            {% endif %}
-          </div>
-          {% if c.resolution %}
-            <div class="text-sm mt-2"><strong>Resolution:</strong> {{ c.resolution }}</div>
-          {% endif %}
-          <div class="notif-time">{{ c.created_at.strftime('%b %d, %Y %I:%M %p') }}</div>
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);background:var(--n50)">
+        <div class="f-chips" id="cmChips" role="group" aria-label="Filter cases by status">
+          <button type="button" class="f-chip active" data-filter="all">All <span class="n">{{ complaints|length }}</span></button>
+          <button type="button" class="f-chip" data-filter="Open">Open <span class="n">{{ ns.open }}</span></button>
+          <button type="button" class="f-chip" data-filter="In Review">In Review <span class="n">{{ ns.review }}</span></button>
+          <button type="button" class="f-chip" data-filter="Resolved">Resolved <span class="n">{{ ns.resolved }}</span></button>
+          <button type="button" class="f-chip" data-filter="Dismissed">Dismissed <span class="n">{{ ns.dismissed }}</span></button>
         </div>
       </div>
-      {% endfor %}
+
+      <div id="cmList">
+        {% for c in complaints %}
+        {% set st_cls = 'resolved' if c.status == 'Resolved' else 'review' if c.status == 'In Review' else 'dismissed' if c.status == 'Dismissed' else 'open' %}
+        {% set st_ico = '✓' if c.status == 'Resolved' else '🔎' if c.status == 'In Review' else '—' if c.status == 'Dismissed' else '!' %}
+        <div class="cm-case" data-status="{{ c.status }}">
+          <div class="cm-case-ico {{ st_cls }}">{{ st_ico }}</div>
+          <div style="min-width:0;flex:1">
+            <div class="flex items-center justify-between gap-2" style="flex-wrap:wrap">
+              <div class="flex items-center gap-2" style="flex-wrap:wrap">
+                <span class="cm-id">#{{ c.id }}</span>
+                <span class="font-bold">{{ c.subject }}</span>
+              </div>
+              {% if c.status == 'Resolved' %}
+                <span class="badge b-green">{{ c.status }}</span>
+              {% elif c.status == 'Dismissed' %}
+                <span class="badge b-gray">{{ c.status }}</span>
+              {% elif c.status == 'In Review' %}
+                <span class="badge b-blue">{{ c.status }}</span>
+              {% else %}
+                <span class="badge b-amber">{{ c.status }}</span>
+              {% endif %}
+            </div>
+
+            <div class="text-muted text-sm mt-2" style="line-height:1.55">{{ c.message }}</div>
+
+            <div class="flex items-center gap-2 mt-2" style="flex-wrap:wrap">
+              {% if c.order_id %}
+                <a href="{{ url_for('order_detail', order_id=c.order_id) }}" class="badge b-blue" style="text-decoration:none">Order #{{ c.order_id }} →</a>
+              {% endif %}
+              <span class="text-muted text-xs">{{ c.created_at.strftime('%b %d, %Y %I:%M %p') if c.created_at else '' }}</span>
+            </div>
+
+            {% if c.resolution %}
+              <div class="cm-resolution">
+                <strong>Admin Resolution:</strong> {{ c.resolution }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="f-empty" id="cmEmpty">
+        <div style="font-size:36px;margin-bottom:8px">💬</div>
+        <div class="font-bold text-sm">No cases with this status</div>
+        <button type="button" class="btn btn-secondary btn-sm mt-3" id="cmReset">Show all cases</button>
+      </div>
     {% else %}
-      <div class="card-body" style="text-align:center;padding:48px 24px">
-        <div class="font-bold">No complaints submitted</div>
+      <div class="card-body" style="text-align:center;padding:56px 24px">
+        <div style="font-size:44px;margin-bottom:10px">✅</div>
+        <div class="font-bold" style="font-size:16px;margin-bottom:4px">No complaints submitted</div>
+        <div class="text-muted text-sm">Need help with an order? Use the form on the left to reach support.</div>
       </div>
     {% endif %}
   </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var subj = document.getElementById('subject');
+  var msg = document.getElementById('message');
+  var countEl = document.getElementById('cmMsgCount');
+
+  document.querySelectorAll('.cm-topic').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!subj) return;
+      subj.value = btn.getAttribute('data-topic');
+      if (msg) msg.focus();
+    });
+  });
+
+  if (msg && countEl) {
+    var syncCount = function () { countEl.textContent = String(msg.value.length); };
+    msg.addEventListener('input', syncCount);
+    syncCount();
+  }
+
+  var cases = Array.prototype.slice.call(document.querySelectorAll('#cmList .cm-case'));
+  if (!cases.length) return;
+  var chips = Array.prototype.slice.call(document.querySelectorAll('#cmChips .f-chip'));
+  var listEl = document.getElementById('cmList');
+  var emptyBox = document.getElementById('cmEmpty');
+  var resetBtn = document.getElementById('cmReset');
+
+  function applyStatus(status) {
+    var shown = 0;
+    cases.forEach(function (el) {
+      var show = status === 'all' || el.getAttribute('data-status') === status;
+      el.classList.toggle('f-hidden', !show);
+      if (show) shown++;
+    });
+    listEl.style.display = shown === 0 ? 'none' : '';
+    emptyBox.classList.toggle('on', shown === 0);
+  }
+
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      applyStatus(chip.getAttribute('data-filter'));
+    });
+  });
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.toggle('active', c.getAttribute('data-filter') === 'all'); });
+      applyStatus('all');
+    });
+  }
+})();
+</script>
 {% endblock %}
